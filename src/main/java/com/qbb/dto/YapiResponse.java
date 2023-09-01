@@ -6,7 +6,7 @@ import java.io.Serializable;
  * yapi 返回结果
  *
  * @author chengsheng@qbb6.com
- * @date 2019/1/31 12:08 PM
+ * @since 2019/1/31 12:08 PM
  */
 public class YapiResponse implements Serializable {
     /**

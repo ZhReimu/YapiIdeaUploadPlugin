@@ -6,7 +6,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -23,13 +22,12 @@ import java.util.regex.Pattern;
  * 描述工具,存放标题，菜单，描述等工具类
  *
  * @author chengsheng@qbb6.com
- * @date 2019/4/30 4:13 PM
+ * @since 2019/4/30 4:13 PM
  */
 public class DesUtil {
 
-
-    static final String DASH = "-";
-    static Pattern humpPattern = Pattern.compile("[A-Z]");
+    private static final String DASH = "-";
+    private static final Pattern humpPattern = Pattern.compile("[A-Z]");
 
     /**
      * 去除字符串首尾出现的某个字符.
@@ -39,8 +37,8 @@ public class DesUtil {
      * @return String.
      */
     public static String trimFirstAndLastChar(String source, char element) {
-        boolean beginIndexFlag = true;
-        boolean endIndexFlag = true;
+        boolean beginIndexFlag;
+        boolean endIndexFlag;
         do {
             if (Strings.isNullOrEmpty(source.trim()) || source.equals(String.valueOf(element))) {
                 source = "";
@@ -57,11 +55,10 @@ public class DesUtil {
 
 
     /**
-     * @description: 获得描述
-     * @param: [psiMethodTarget]
-     * @return: java.lang.String
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/2/2
+     * 获得描述
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/2/2
      */
     public static String getDescription(PsiMethod psiMethodTarget) {
         if (psiMethodTarget.getDocComment() != null) {
@@ -77,11 +74,10 @@ public class DesUtil {
     }
 
     /**
-     * @description: 通过paramName 获得描述
-     * @param: [psiMethodTarget, paramName]
-     * @return: java.lang.String
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/5/22
+     * 通过paramName 获得描述
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/5/22
      */
     public static String getParamDesc(PsiMethod psiMethodTarget, String paramName) {
         if (psiMethodTarget.getDocComment() != null) {
@@ -96,11 +92,10 @@ public class DesUtil {
     }
 
     /**
-     * @description: 获得属性注释
-     * @param: [psiDocComment]
-     * @return: java.lang.String
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/4/27
+     * 获得属性注释
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/4/27
      */
     public static String getFiledDesc(PsiDocComment psiDocComment) {
         if (Objects.nonNull(psiDocComment)) {
@@ -113,11 +108,10 @@ public class DesUtil {
     }
 
     /**
-     * @description: 获得引用url
-     * @param: []
-     * @return: java.lang.String
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/5/18
+     * 获得引用 url
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/5/18
      */
     public static String getUrlReFerenceRDesc(String text) {
         if (Strings.isNullOrEmpty(text)) {
@@ -130,11 +124,10 @@ public class DesUtil {
     }
 
     /**
-     * @description: 获得菜单
-     * @param: [text]
-     * @return: java.lang.String
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/5/18
+     * 获得菜单
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/5/18
      */
     public static String getMenu(String text) {
         if (Strings.isNullOrEmpty(text) || !text.contains("*/")) {
@@ -150,9 +143,6 @@ public class DesUtil {
 
     /**
      * 获得路径
-     *
-     * @param text
-     * @return
      */
     public static String getPath(String text) {
         if (Strings.isNullOrEmpty(text) || !text.contains("*/")) {
@@ -167,11 +157,10 @@ public class DesUtil {
     }
 
     /**
-     * @description: 获得状态
-     * @param: [text]
-     * @return: java.lang.String
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/5/18
+     * 获得状态
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/5/18
      */
     public static String getStatus(String text) {
         if (Strings.isNullOrEmpty(text) || !text.contains("*/")) {
@@ -186,11 +175,10 @@ public class DesUtil {
     }
 
     /**
-     * @description: 获得link 备注
-     * @param: [remark, project, field]
-     * @return: java.lang.String
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/5/18
+     * 获得 link 备注
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/5/18
      */
     public static String getLinkRemark(String remark, Project project, PsiField field) {
         // 尝试获得@link 的常量定义
@@ -254,11 +242,10 @@ public class DesUtil {
 
 
     /**
-     * @description: 获得从start 开始 end 结束中间的内容
-     * @param: [content, start, end]
-     * @return: java.util.List<java.lang.String>
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/7/2
+     * 获得从 start 开始 end 结束中间的内容
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/7/2
      */
     public static List<PsiClass> getFieldLinks(Project project, PsiField field) {
         if (Objects.isNull(field.getDocComment())) {
@@ -298,18 +285,17 @@ public class DesUtil {
                 } else {
                     result.add(psiClassLink);
                 }
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             }
         }
         return result;
     }
 
     /**
-     * @description: 组装路径
-     * @param: [path, subPath]
-     * @return: void
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/9/25
+     * 组装路径
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/9/25
      */
     public static void addPath(StringBuilder path, String subPath) {
         if (subPath.startsWith("/")) {
@@ -321,16 +307,13 @@ public class DesUtil {
 
     /**
      * 驼峰转化  兼容swagger
-     *
-     * @param camelCase
-     * @return
      */
     public static String camelToLine(String camelCase, String split) {
         if (Strings.isNullOrEmpty(split)) {
             split = DASH;
         }
         Matcher matcher = humpPattern.matcher(camelCase);
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         while (matcher.find()) {
             matcher.appendReplacement(sb, split + matcher.group(0).toLowerCase());
         }

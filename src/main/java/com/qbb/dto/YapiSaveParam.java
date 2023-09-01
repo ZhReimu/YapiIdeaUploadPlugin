@@ -7,7 +7,7 @@ import java.util.List;
  * yapi 保存请求参数
  *
  * @author chengsheng@qbb6.com
- * @date 2019/1/31 11:43 AM
+ * @since 2019/1/31 11:43 AM
  */
 public class YapiSaveParam implements Serializable {
     /**
@@ -22,7 +22,7 @@ public class YapiSaveParam implements Serializable {
     /**
      * header
      */
-    private List req_headers;
+    private List<YapiHeaderDTO> req_headers;
     /**
      * 请求参数 form 类型
      */
@@ -161,11 +161,11 @@ public class YapiSaveParam implements Serializable {
         this.req_query = req_query;
     }
 
-    public List getReq_headers() {
+    public List<YapiHeaderDTO> getReq_headers() {
         return req_headers;
     }
 
-    public void setReq_headers(List req_headers) {
+    public void setReq_headers(List<YapiHeaderDTO> req_headers) {
         this.req_headers = req_headers;
     }
 

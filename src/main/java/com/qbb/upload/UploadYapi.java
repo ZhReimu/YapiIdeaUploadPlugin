@@ -20,23 +20,20 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * 上传到yapi
+ * 上传到 yapi
  *
  * @author chengsheng@qbb6.com
- * @date 2019/1/31 11:41 AM
+ * @since 2019/1/31 11:41 AM
  */
 public class UploadYapi {
 
-
     private final Gson gson = new Gson();
-
-
+    
     /**
-     * @description: 调用保存接口
-     * @param: [yapiSaveParam, attachUpload, path]
-     * @return: com.qbb.dto.YapiResponse
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/5/15
+     * 调用保存接口
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/5/15
      */
     public YapiResponse uploadSave(YapiSaveParam yapiSaveParam, String attachUpload, String path) throws IOException {
         if (Strings.isNullOrEmpty(yapiSaveParam.getTitle())) {
@@ -53,7 +50,7 @@ public class UploadYapi {
             yapiSaveParam.setReq_body_type("json");
         }
         if (Objects.isNull(yapiSaveParam.getReq_headers())) {
-            List list = new ArrayList();
+            List<YapiHeaderDTO> list = new ArrayList<>();
             list.add(yapiHeaderDTO);
             yapiSaveParam.setReq_headers(list);
         } else {
@@ -71,11 +68,8 @@ public class UploadYapi {
         }
     }
 
-
     /**
-     * 获得httpPost
-     *
-     * @return
+     * 获得 httpPost
      */
     private HttpPost getHttpPost(String url, String body) {
         HttpPost httpPost = null;
@@ -84,46 +78,43 @@ public class UploadYapi {
             httpPost.setHeader("Content-type", "application/json;charset=utf-8");
             HttpEntity reqEntity = new StringEntity(body == null ? "" : body, "UTF-8");
             httpPost.setEntity(reqEntity);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
         return httpPost;
     }
 
     /**
-     * @description: 上传文件
-     * @param: [url, filePath]
-     * @return: java.lang.String
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/5/15
+     * 上传文件
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/5/15
      */
     public String uploadFile(String url, String filePath) {
-        HttpPost httpPost = null;
+        HttpPost httpPost;
         try {
             httpPost = new HttpPost(url);
             FileBody bin = new FileBody(new File(filePath));
             HttpEntity reqEntity = MultipartEntityBuilder.create().addPart("file", bin).build();
             httpPost.setEntity(reqEntity);
             return HttpClientUtil.ObjectToString(HttpClientUtil.getHttpclient().execute(httpPost), "utf-8");
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
         return "";
     }
 
-
     private HttpGet getHttpGet(String url) {
         try {
             return HttpClientUtil.getHttpGet(url, "application/json", "application/json; charset=utf-8");
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
         return null;
     }
 
     /**
-     * @description: 获得描述
-     * @param: [yapiSaveParam]
-     * @return: com.qbb.dto.YapiResponse
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/7/28
+     * 获得描述
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/7/28
      */
     public void changeDesByPath(YapiSaveParam yapiSaveParam) {
         try {
@@ -143,26 +134,27 @@ public class UploadYapi {
                     yapiSaveParam.setCatid(yapiInterfaceResponse.getCatid().toString());
                 }
             }
-        } catch (Exception e) {
+        } catch (Exception ignored) {
 
         }
     }
 
     /**
-     * @description: 获得分类或者创建分类或者
-     * @param: [yapiSaveParam]
-     * @return: com.qbb.dto.YapiResponse
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/5/15
+     * 获得分类或者创建分类
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/5/15
      */
     public YapiResponse getCatIdOrCreate(YapiSaveParam yapiSaveParam) {
         // 如果缓存不存在，切自定义菜单为空，则使用默认目录
         if (Strings.isNullOrEmpty(yapiSaveParam.getMenu())) {
             yapiSaveParam.setMenu(YapiConstant.menu);
         }
-        String response = null;
+        String response;
         try {
-            response = HttpClientUtil.ObjectToString(HttpClientUtil.getHttpclient().execute(this.getHttpGet(yapiSaveParam.getYapiUrl() + YapiConstant.yapiCatMenu + "?project_id=" + yapiSaveParam.getProjectId() + "&token=" + yapiSaveParam.getToken())), "utf-8");
+            String url = yapiSaveParam.getYapiUrl() + YapiConstant.yapiCatMenu + "?project_id="
+                    + yapiSaveParam.getProjectId() + "&token=" + yapiSaveParam.getToken();
+            response = HttpClientUtil.ObjectToString(HttpClientUtil.getHttpclient().execute(this.getHttpGet(url)), "utf-8");
             YapiResponse yapiResponse = gson.fromJson(response, YapiResponse.class);
             if (yapiResponse.getErrcode() == 0) {
                 List<YapiCatResponse> list = (List<YapiCatResponse>) yapiResponse.getData();
@@ -172,7 +164,7 @@ public class UploadYapi {
                 // 循环多级菜单，判断是否存在，如果不存在就创建
                 //  解决多级菜单创建问题
                 Integer parent_id = -1;
-                Integer now_id = null;
+                Integer now_id;
                 for (int i = 0; i < menus.length; i++) {
                     if (Strings.isNullOrEmpty(menus[i])) {
                         continue;
@@ -202,7 +194,7 @@ public class UploadYapi {
                 //出现这种情况可能是yapi 版本不支持
                 yapiSaveParam.setCatid(addMenu(yapiSaveParam, -1, yapiSaveParam.getMenu()).toString());
                 return new YapiResponse();
-            } catch (IOException e1) {
+            } catch (IOException ignored) {
             }
             return new YapiResponse(0, e.toString());
         }
@@ -210,11 +202,10 @@ public class UploadYapi {
 
 
     /**
-     * @description: 新增菜单
-     * @param: [yapiSaveParam, parent_id]
-     * @return: java.lang.Integer
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/7/28
+     * 新增菜单
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/7/28
      */
     private Integer addMenu(YapiSaveParam yapiSaveParam, Integer parent_id, String menu) throws IOException {
         YapiCatMenuParam yapiCatMenuParam = new YapiCatMenuParam(menu, yapiSaveParam.getProjectId(), yapiSaveParam.getToken(), parent_id);
