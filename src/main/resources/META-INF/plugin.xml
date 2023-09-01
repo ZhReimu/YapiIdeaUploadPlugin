@@ -4,6 +4,7 @@
     <vendor email="chengsheng@qbb6.com" url="http://www.qbb6.com">QBB</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
