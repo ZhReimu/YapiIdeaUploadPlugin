@@ -1037,7 +1037,7 @@ public class BuildJsonForYapi {
                                 String classTypeName = iterableClass.getName();
                                 if (!NormalTypes.isNormalType(classTypeName) && !NormalTypes.collectTypes.containsKey(classTypeName)) {
                                     // addFilePaths(filePaths,iterableClass);
-                                    getFilePath(project, filePaths, List.of(iterableClass));
+                                    getFilePath(project, filePaths, Collections.singletonList(iterableClass));
                                 }
                             }
                         } else if (fieldTypeName.startsWith("HashMap") || fieldTypeName.startsWith("Map") || fieldTypeName.startsWith("LinkedHashMap")) {
