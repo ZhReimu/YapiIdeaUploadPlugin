@@ -40,6 +40,7 @@ intellij {
     version.set("2020.2")
     type.set("IU") // Target IDE Platform
     plugins.set(listOf("java"))
+    sandboxDir.set("${rootProject.rootDir}/idea-sandbox")
 }
 
 tasks {
