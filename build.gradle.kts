@@ -26,7 +26,6 @@ version = "1.8.2"
 
 repositories {
     mavenLocal()
-    jcenter()
     mavenCentral()
 }
 
@@ -46,11 +45,11 @@ intellij {
 tasks {
     // Set the JVM compatibility versions
     withType<JavaCompile> {
-        sourceCompatibility = "17"
-        targetCompatibility = "17"
+        sourceCompatibility = "11"
+        targetCompatibility = "11"
     }
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "17"
+        kotlinOptions.jvmTarget = "11"
     }
     patchPluginXml {
         sinceBuild.set("222")
