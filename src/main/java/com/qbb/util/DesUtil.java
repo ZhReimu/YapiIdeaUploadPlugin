@@ -11,6 +11,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.qbb.constant.YapiStatusEnum;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -297,7 +298,10 @@ public class DesUtil {
      * @author chengsheng@qbb6.com
      * @since 2019/9/25
      */
-    public static void addPath(StringBuilder path, String subPath) {
+    public static void addPath(StringBuilder path, @Nullable String subPath) {
+        if (subPath == null) {
+            return;
+        }
         if (subPath.startsWith("/")) {
             path.append(subPath);
         } else {

@@ -36,23 +36,28 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
 /**
- * @description: 为了yapi 创建的
- * @author: chengsheng@qbb6.com
- * @date: 2018/10/27
+ * 构造用以生成 yapi 文档的 json 数据
+ *
+ * @author chengsheng@qbb6.com
+ * @since 2018/10/27
  */
 public class BuildJsonForYapi {
-    static Set<String> filePaths = new CopyOnWriteArraySet<>();
+
+    private static final Set<String> filePaths = new CopyOnWriteArraySet<>();
     private static final NotificationGroup notificationGroup;
 
     static {
         notificationGroup = new NotificationGroup("BuildJson.NotificationGroup", NotificationDisplayType.BALLOON, true);
     }
 
-    public static YapiApiDTO actionPerformed(PsiClass selectedClass, PsiMethod psiMethodTarget, Project project, PsiFile psiFile, String attachUpload, String returnClass) {
+    public static YapiApiDTO actionPerformed(
+            PsiClass selectedClass, PsiMethod psiMethodTarget, Project project,
+            PsiFile psiFile, String attachUpload, String returnClass
+    ) {
         YapiApiDTO yapiApiDTO = new YapiApiDTO();
         // 获得路径
         StringBuilder path = new StringBuilder();
-        //获得Controller上的API注解
+        //获得 Controller 上的 API 注解
         String apiValue = PsiAnnotationSearchUtil.getPsiParameterAnnotationParam(selectedClass, SwaggerConstants.API, "tags");
         if (StringUtils.isNotBlank(apiValue)) {
             yapiApiDTO.setMenu(apiValue);
@@ -62,7 +67,7 @@ public class BuildJsonForYapi {
                 yapiApiDTO.setMenu(apiValue);
             }
         }
-        // 获取类上面的RequestMapping 中的value
+        // 获取类上面的 RequestMapping 中的 value
         PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(selectedClass, SpringMVCConstant.RequestMapping);
         if (psiAnnotation != null) {
             PsiNameValuePair[] psiNameValuePairs = psiAnnotation.getParameterList().getAttributes();
@@ -70,15 +75,15 @@ public class BuildJsonForYapi {
                 if (psiNameValuePairs[0].getLiteralValue() != null) {
                     DesUtil.addPath(path, psiNameValuePairs[0].getLiteralValue());
                 } else {
-                    PsiAnnotationMemberValue psiAnnotationMemberValue = psiAnnotation.findAttributeValue("value");
-                    if (psiAnnotationMemberValue != null) {
-                        String[] results = psiAnnotationMemberValue.getReference().resolve().getText().split("=");
-                        DesUtil.addPath(path, results[results.length - 1].split(";")[0].replace("\"", "").trim());
-                    }
+                    Optional.ofNullable(psiAnnotation.findAttributeValue("value"))
+                            .map(PsiAnnotationMemberValue::getReference)
+                            .map(PsiReference::resolve)
+                            .map(PsiElement::getText)
+                            .map(it -> it.split("=")).ifPresent(results -> addPatch(results, path));
                 }
             }
         }
-        //获取swagger注解
+        // 获取 swagger 注解
         String operation = PsiAnnotationSearchUtil.getPsiParameterAnnotationValue(psiMethodTarget, SwaggerConstants.API_OPERATION);
         if (StringUtils.isNotEmpty(operation)) {
             Notification info = notificationGroup.createNotification("apiOperation:" + operation, NotificationType.INFORMATION);
@@ -90,40 +95,39 @@ public class BuildJsonForYapi {
         PsiAnnotation psiAnnotationMethod = PsiAnnotationSearchUtil.findAnnotation(psiMethodTarget, SpringMVCConstant.RequestMapping);
         if (psiAnnotationMethod != null) {
             PsiNameValuePair[] psiNameValuePairs = psiAnnotationMethod.getParameterList().getAttributes();
-            if (psiNameValuePairs != null) {
-                for (PsiNameValuePair psiNameValuePair : psiNameValuePairs) {
-                    //获得方法上的路径
-                    if (Objects.isNull(psiNameValuePair.getName()) || "value".equals(psiNameValuePair.getName())) {
-                        PsiReference psiReference = psiNameValuePair.getValue().getReference();
-                        if (psiReference == null) {
-                            DesUtil.addPath(path, psiNameValuePair.getLiteralValue());
-                        } else {
-                            String[] results = psiReference.resolve().getText().split("=");
-                            DesUtil.addPath(path, results[results.length - 1].split(";")[0].replace("\"", "").trim());
-                            yapiApiDTO.setTitle(DesUtil.getUrlReFerenceRDesc(psiReference.resolve().getText()));
-                            if (StringUtils.isBlank(yapiApiDTO.getMenu())) {
-                                yapiApiDTO.setMenu(DesUtil.getMenu(psiReference.resolve().getText()));
-                            }
-                            yapiApiDTO.setStatus(DesUtil.getStatus(psiReference.resolve().getText()));
-                            yapiApiDTO.setDesc("<pre><code>  " + psiReference.resolve().getText() + " </code></pre> <hr>");
+            for (PsiNameValuePair psiNameValuePair : psiNameValuePairs) {
+                //获得方法上的路径
+                if (Objects.isNull(psiNameValuePair.getName()) || "value".equals(psiNameValuePair.getName())) {
+                    PsiReference psiReference = Optional.ofNullable(psiNameValuePair.getValue())
+                            .map(PsiElement::getReference).orElse(null);
+                    if (psiReference == null) {
+                        DesUtil.addPath(path, psiNameValuePair.getLiteralValue());
+                    } else {
+                        String[] results = psiReference.resolve().getText().split("=");
+                        DesUtil.addPath(path, results[results.length - 1].split(";")[0].replace("\"", "").trim());
+                        yapiApiDTO.setTitle(DesUtil.getUrlReFerenceRDesc(psiReference.resolve().getText()));
+                        if (StringUtils.isBlank(yapiApiDTO.getMenu())) {
+                            yapiApiDTO.setMenu(DesUtil.getMenu(psiReference.resolve().getText()));
                         }
-                        yapiApiDTO.setPath(path.toString());
-                    } else if ("method".equals(psiNameValuePair.getName()) && psiNameValuePair.getValue().toString().toUpperCase().contains(HttpMethodConstant.GET)) {
-                        // 判断是否为Get 请求
-                        yapiApiDTO.setMethod(HttpMethodConstant.GET);
-                    } else if ("method".equals(psiNameValuePair.getName()) && psiNameValuePair.getValue().toString().toUpperCase().contains(HttpMethodConstant.POST)) {
-                        // 判断是否为Post 请求
-                        yapiApiDTO.setMethod(HttpMethodConstant.POST);
-                    } else if ("method".equals(psiNameValuePair.getName()) && psiNameValuePair.getValue().toString().toUpperCase().contains(HttpMethodConstant.PUT)) {
-                        // 判断是否为 PUT 请求
-                        yapiApiDTO.setMethod(HttpMethodConstant.PUT);
-                    } else if ("method".equals(psiNameValuePair.getName()) && psiNameValuePair.getValue().toString().toUpperCase().contains(HttpMethodConstant.DELETE)) {
-                        // 判断是否为 DELETE 请求
-                        yapiApiDTO.setMethod(HttpMethodConstant.DELETE);
-                    } else if ("method".equals(psiNameValuePair.getName()) && psiNameValuePair.getValue().toString().toUpperCase().contains(HttpMethodConstant.PATCH)) {
-                        // 判断是否为 PATCH 请求
-                        yapiApiDTO.setMethod(HttpMethodConstant.PATCH);
+                        yapiApiDTO.setStatus(DesUtil.getStatus(psiReference.resolve().getText()));
+                        yapiApiDTO.setDesc("<pre><code>  " + psiReference.resolve().getText() + " </code></pre> <hr>");
                     }
+                    yapiApiDTO.setPath(path.toString());
+                } else if ("method".equals(psiNameValuePair.getName()) && psiNameValuePair.getValue().toString().toUpperCase().contains(HttpMethodConstant.GET)) {
+                    // 判断是否为Get 请求
+                    yapiApiDTO.setMethod(HttpMethodConstant.GET);
+                } else if ("method".equals(psiNameValuePair.getName()) && psiNameValuePair.getValue().toString().toUpperCase().contains(HttpMethodConstant.POST)) {
+                    // 判断是否为Post 请求
+                    yapiApiDTO.setMethod(HttpMethodConstant.POST);
+                } else if ("method".equals(psiNameValuePair.getName()) && psiNameValuePair.getValue().toString().toUpperCase().contains(HttpMethodConstant.PUT)) {
+                    // 判断是否为 PUT 请求
+                    yapiApiDTO.setMethod(HttpMethodConstant.PUT);
+                } else if ("method".equals(psiNameValuePair.getName()) && psiNameValuePair.getValue().toString().toUpperCase().contains(HttpMethodConstant.DELETE)) {
+                    // 判断是否为 DELETE 请求
+                    yapiApiDTO.setMethod(HttpMethodConstant.DELETE);
+                } else if ("method".equals(psiNameValuePair.getName()) && psiNameValuePair.getValue().toString().toUpperCase().contains(HttpMethodConstant.PATCH)) {
+                    // 判断是否为 PATCH 请求
+                    yapiApiDTO.setMethod(HttpMethodConstant.PATCH);
                 }
             }
         } else {
@@ -268,6 +272,10 @@ public class BuildJsonForYapi {
             Notifications.Bus.notify(error, project);
         }
         return null;
+    }
+
+    private static void addPatch(String[] results, StringBuilder path) {
+        DesUtil.addPath(path, results[results.length - 1].split(";")[0].replace("\"", "").trim());
     }
 
     /**
@@ -1052,13 +1060,13 @@ public class BuildJsonForYapi {
 
     /**
      * 批量生成 接口数据
-     *
-     * @param e
-     * @return
      */
-    public ArrayList<YapiApiDTO> actionPerformedList(AnActionEvent e, String attachUpload, String returnClass) {
+    public List<YapiApiDTO> actionPerformedList(AnActionEvent e, String attachUpload, String returnClass) {
         Editor editor = e.getDataContext().getData(CommonDataKeys.EDITOR);
         PsiFile psiFile = e.getDataContext().getData(CommonDataKeys.PSI_FILE);
+        if (editor == null || psiFile == null) {
+            return Collections.emptyList();
+        }
         String selectedText = e.getRequiredData(CommonDataKeys.EDITOR).getSelectionModel().getSelectedText();
         Project project = editor.getProject();
         PsiElement referenceAt = psiFile.findElementAt(editor.getCaretModel().getOffset());
