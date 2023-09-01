@@ -11,15 +11,14 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
+ * 配置持久化
+ *
  * @author zhangyunfan
  * @version 1.0
- * @ClassName: ConfigPersistence
- * @Description: 配置持久化
- * @date 2020/12/25
+ * @since 2020/12/25
  */
 @State(name = "yapiUploads", storages = {@Storage(value = "$APP_CONFIG$/yapiUploads.xml")})
 public class ConfigPersistence implements PersistentStateComponent<List<ConfigDTO>> {
-
 
     private List<ConfigDTO> configs;
 

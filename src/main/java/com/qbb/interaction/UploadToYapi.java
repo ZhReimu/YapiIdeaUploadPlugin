@@ -25,41 +25,44 @@ import java.awt.datatransfer.StringSelection;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
- * @description: 入口
- * @author: chengsheng@qbb6.com
- * @date: 2019/5/15
+ * 入口
+ *
+ * @author chengsheng@qbb6.com
+ * @since 2019/5/15
  */
 public class UploadToYapi extends AnAction {
 
-    private static final NotificationGroup notificationGroup;
-
-    static {
-        notificationGroup = new NotificationGroup("Java2Json.NotificationGroup", NotificationDisplayType.BALLOON, true);
-    }
-
+    private static final NotificationGroup notificationGroup = new NotificationGroup("Java2Json.NotificationGroup", NotificationDisplayType.BALLOON, true);
 
     @Override
+    @SuppressWarnings("DialogTitleCapitalization")
     public void actionPerformed(AnActionEvent e) {
-        Editor editor = e.getDataContext().getData(CommonDataKeys.EDITOR);
-
-        Project project = editor.getProject();
-        String projectToken = null;
-        String projectId = null;
-        String yapiUrl = null;
-        String projectType = null;
+        Project project = Optional.ofNullable(e.getDataContext().getData(CommonDataKeys.EDITOR))
+                .map(Editor::getProject).orElse(null);
+        if (project == null) {
+            return;
+        }
+        String projectToken;
+        String projectId;
+        String yapiUrl;
+        String projectType;
         String returnClass = null;
         String attachUpload = null;
         // 获取配置
         try {
-            final java.util.List<ConfigDTO> configs = ServiceManager.getService(ConfigPersistence.class).getConfigs();
-            if (configs == null || configs.size() == 0) {
+            final List<ConfigDTO> configs = ServiceManager.getService(ConfigPersistence.class).getConfigs();
+            if (configs == null || configs.isEmpty()) {
                 Messages.showErrorDialog("请先去配置界面配置yapi配置", "获取配置失败！");
                 return;
             }
             PsiFile psiFile = e.getDataContext().getData(CommonDataKeys.PSI_FILE);
+            if (psiFile == null) {
+                return;
+            }
             String virtualFile = psiFile.getVirtualFile().getPath();
             final List<ConfigDTO> collect = configs.stream()
                     .filter(it -> {
@@ -149,11 +152,10 @@ public class UploadToYapi extends AnAction {
     }
 
     /**
-     * @description: 设置到剪切板
-     * @param: [content]
-     * @return: void
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/7/3
+     * 复制到剪切板
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/7/3
      */
     private void setClipboard(String content) {
         //获取系统剪切板
