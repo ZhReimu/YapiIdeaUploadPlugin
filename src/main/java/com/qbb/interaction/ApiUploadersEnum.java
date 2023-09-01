@@ -52,26 +52,8 @@ public enum ApiUploadersEnum {
         String projectId = config.getProjectId();
         if (yapiDubboDTOs != null) {
             for (YapiDubboDTO yapiDubboDTO : yapiDubboDTOs) {
-                YapiSaveParam yapiSaveParam = new YapiSaveParam(projectToken, yapiDubboDTO.getTitle(), yapiDubboDTO.getPath(), yapiDubboDTO.getParams(), yapiDubboDTO.getResponse(), Integer.valueOf(projectId), yapiUrl, yapiDubboDTO.getDesc());
-                yapiSaveParam.setStatus(yapiDubboDTO.getStatus());
-                if (!Strings.isNullOrEmpty(yapiDubboDTO.getMenu())) {
-                    yapiSaveParam.setMenu(yapiDubboDTO.getMenu());
-                } else {
-                    yapiSaveParam.setMenu(YapiConstant.menu);
-                }
-                try {
-                    // 上传
-                    YapiResponse yapiResponse = new UploadYapi().uploadSave(yapiSaveParam, null, null);
-                    if (yapiResponse.getErrcode() != 0) {
-                        Messages.showErrorDialog("上传失败！异常:  " + yapiResponse.getErrmsg(), "上传失败！");
-                    } else {
-                        String url = yapiUrl + "/project/" + projectId + "/interface/api/cat_" + yapiResponse.getCatId();
-                        Messages.showInfoMessage("上传成功！接口文档url地址:  " + url, "上传成功！");
-                        return url;
-                    }
-                } catch (Exception e1) {
-                    Messages.showErrorDialog("上传失败！异常:  " + e1, "上传失败！");
-                }
+                YapiSaveParam yapiSaveParam = YapiSaveParam.ofDubbo(yapiDubboDTO, projectToken, projectId, yapiUrl);
+                return upload(yapiSaveParam, config);
             }
         }
         return null;
@@ -85,32 +67,32 @@ public enum ApiUploadersEnum {
         List<YapiApiDTO> yapiApiDTOS = new BuildJsonForYapi().actionPerformedList(event, null, null);
         if (yapiApiDTOS != null) {
             for (YapiApiDTO yapiApiDTO : yapiApiDTOS) {
-                YapiSaveParam yapiSaveParam = new YapiSaveParam(projectToken, yapiApiDTO.getTitle(), yapiApiDTO.getPath(), yapiApiDTO.getParams(), yapiApiDTO.getRequestBody(), yapiApiDTO.getResponse(), Integer.valueOf(projectId), yapiUrl, true, yapiApiDTO.getMethod(), yapiApiDTO.getDesc(), yapiApiDTO.getHeader());
-                yapiSaveParam.setReq_body_form(yapiApiDTO.getReq_body_form());
-                yapiSaveParam.setReq_body_type(yapiApiDTO.getReq_body_type());
-                yapiSaveParam.setReq_params(yapiApiDTO.getReq_params());
-                yapiSaveParam.setStatus(yapiApiDTO.getStatus());
+                YapiSaveParam yapiSaveParam = YapiSaveParam.ofApi(yapiApiDTO, projectToken, projectId, yapiUrl);
                 if (!Strings.isNullOrEmpty(yapiApiDTO.getMenu())) {
                     yapiSaveParam.setMenu(yapiApiDTO.getMenu());
                 } else {
                     yapiSaveParam.setMenu(YapiConstant.menu);
                 }
-                try {
-                    // 上传
-                    YapiResponse yapiResponse = new UploadYapi().uploadSave(yapiSaveParam, null, null);
-                    if (yapiResponse.getErrcode() != 0) {
-                        Messages.showInfoMessage("上传失败，原因:  " + yapiResponse.getErrmsg(), "上传失败！");
-                    } else {
-                        String url = yapiUrl + "/project/" + projectId + "/interface/api/cat_" + yapiResponse.getCatId();
-                        Messages.showInfoMessage("上传成功！接口文档url地址:  " + url, "上传成功！");
-                        return url;
-                    }
-                } catch (Exception e1) {
-                    Messages.showErrorDialog("上传失败！异常:  " + e1, "上传失败！");
-                }
+                return upload(yapiSaveParam, config);
             }
         }
         return null;
     }
 
+    private static String upload(YapiSaveParam yapiSaveParam, ConfigDTO config) {
+        try {
+            // 上传
+            YapiResponse yapiResponse = new UploadYapi().uploadSave(yapiSaveParam, null, null);
+            if (yapiResponse.getErrcode() != 0) {
+                Messages.showInfoMessage("上传失败，原因:  " + yapiResponse.getErrmsg(), "上传失败！");
+            } else {
+                String url = config.getYapiUrl() + "/project/" + config.getProjectId() + "/interface/api/cat_" + yapiResponse.getCatId();
+                Messages.showInfoMessage("上传成功！接口文档url地址:  " + url, "上传成功！");
+                return url;
+            }
+        } catch (Exception e1) {
+            Messages.showErrorDialog("上传失败！异常:  " + e1, "上传失败！");
+        }
+        return null;
+    }
 }
