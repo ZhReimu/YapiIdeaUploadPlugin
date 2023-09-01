@@ -1,93 +1,63 @@
 package com.qbb.dto;
 
+import lombok.Data;
+
 import java.io.Serializable;
 
 /**
+ * 配置实体
+ *
  * @author zhangyunfan
  * @version 1.0
- * @ClassName: ConfigDTO
- * @Description: 配置实体
- * @date 2020/12/25
+ * @since 2020/12/25
  */
+@Data
 public class ConfigDTO implements Serializable {
 
-    String projectName;
+    /**
+     * 项目名称
+     */
+    private String projectName;
 
-    String moduleName;
+    /**
+     * 模块名称
+     */
+    private String moduleName;
 
-    String projectToken;
+    /**
+     * yapi 项目 token
+     */
+    private String projectToken;
 
-    String projectId;
+    /**
+     * yapi 项目 id
+     */
+    private String projectId;
 
-    String yapiUrl;
+    /**
+     * yapi URL
+     */
+    private String yapiUrl;
 
-    String projectType;
+    /**
+     * 项目类型
+     */
+    private String projectType;
 
-    String returnClass;
+    /**
+     * 返回值
+     */
+    private String returnClass;
 
-    String attachUpload;
+    /**
+     * 附件上传
+     */
+    private String attachUpload;
 
-    public String getProjectName() {
-        return projectName;
+    public boolean checkValid() {
+        return projectName != null && moduleName != null
+                && projectToken != null && projectId != null
+                && yapiUrl != null && projectType != null;
     }
 
-    public void setProjectName(String projectName) {
-        this.projectName = projectName;
-    }
-
-    public String getModuleName() {
-        return moduleName;
-    }
-
-    public void setModuleName(String moduleName) {
-        this.moduleName = moduleName;
-    }
-
-    public String getProjectToken() {
-        return projectToken;
-    }
-
-    public void setProjectToken(String projectToken) {
-        this.projectToken = projectToken;
-    }
-
-    public String getProjectId() {
-        return projectId;
-    }
-
-    public void setProjectId(String projectId) {
-        this.projectId = projectId;
-    }
-
-    public String getYapiUrl() {
-        return yapiUrl;
-    }
-
-    public void setYapiUrl(String yapiUrl) {
-        this.yapiUrl = yapiUrl;
-    }
-
-    public String getProjectType() {
-        return projectType;
-    }
-
-    public void setProjectType(String projectType) {
-        this.projectType = projectType;
-    }
-
-    public String getReturnClass() {
-        return returnClass;
-    }
-
-    public void setReturnClass(String returnClass) {
-        this.returnClass = returnClass;
-    }
-
-    public String getAttachUpload() {
-        return attachUpload;
-    }
-
-    public void setAttachUpload(String attachUpload) {
-        this.attachUpload = attachUpload;
-    }
 }

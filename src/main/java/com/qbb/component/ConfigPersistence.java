@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.qbb.dto.ConfigDTO;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,17 +18,21 @@ import java.util.List;
  * @version 1.0
  * @since 2020/12/25
  */
-@State(name = "yapiUploads", storages = {@Storage(value = "$APP_CONFIG$/yapiUploads.xml")})
+@Getter
+@State(name = "yapiUploads", storages = {@Storage("yapiUploads.xml")})
 public class ConfigPersistence implements PersistentStateComponent<List<ConfigDTO>> {
 
     private List<ConfigDTO> configs;
 
-    public static ConfigPersistence getInstance() {
-        return ServiceManager.getService(ConfigPersistence.class);
-    }
+    private static final ConfigPersistence EMPTY = new ConfigPersistence();
 
-    public List<ConfigDTO> getConfigs() {
-        return configs;
+    /**
+     * 获取该持久化类的实例, 永不为空
+     */
+    @NotNull
+    public static ConfigPersistence getInstance() {
+        ConfigPersistence service = ServiceManager.getService(ConfigPersistence.class);
+        return service == null ? EMPTY : service;
     }
 
     public void setConfigs(List<ConfigDTO> configs) {

@@ -7,7 +7,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.ui.JBUI;
 import com.qbb.dto.ConfigDTO;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -16,6 +15,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 添加项目对话框
+ */
 public class ItemAddEditDialog extends DialogWrapper {
 
     private final ConfigDTO configDTO;
@@ -38,26 +40,19 @@ public class ItemAddEditDialog extends DialogWrapper {
     @Override
     @SuppressWarnings("SuspiciousNameCombination")
     protected JComponent createCenterPanel() {
-
         JPanel panel = new JPanel();
-
         GridBagLayout gridBagLayout = new GridBagLayout();
         panel.setLayout(gridBagLayout);
-
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.anchor = GridBagConstraints.WEST;
         gridBagConstraints.insets = JBUI.insets(10, 10, 0, 0);
-
         final JLabel label = new JLabel("选择模块:");
         label.setAlignmentY(JComponent.LEFT_ALIGNMENT);
-
         comboBox = new ComboBox<>();
         comboBox.setModel(new DefaultComboBoxModel<>(moduleArr));
         comboBox.setBounds(15, 15, 100, 35);
-
         itemComponent = new ItemComponent(configDTO, true);
         itemComponent.setPreferredSize(new Dimension(0, 230));
-
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 4;
         gridBagConstraints.gridwidth = 1;
@@ -72,7 +67,6 @@ public class ItemAddEditDialog extends DialogWrapper {
         gridBagConstraints.weightx = 1;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagLayout.setConstraints(comboBox, gridBagConstraints);
-
         gridBagConstraints.insets = JBUI.insets(10, -10, 0, 0);
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 8;
@@ -81,7 +75,6 @@ public class ItemAddEditDialog extends DialogWrapper {
         gridBagConstraints.weightx = 1;
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagLayout.setConstraints(itemComponent, gridBagConstraints);
-
         panel.add(label);
         panel.add(comboBox);
         panel.add(itemComponent);
@@ -89,18 +82,10 @@ public class ItemAddEditDialog extends DialogWrapper {
         return panel;
     }
 
-    @Override
-    public boolean isOK() {
-        if (StringUtils.isEmpty(itemComponent.yapiTextArea.getText())
-                || StringUtils.isEmpty(itemComponent.projectTokenTextArea.getText())
-                || StringUtils.isEmpty(itemComponent.projectIdTextArea.getText())
-                || StringUtils.isEmpty((String) itemComponent.projectTypeComboBox.getSelectedItem())) {
-            return false;
-        }
-        return super.isOK();
-    }
-
-    public ConfigDTO getConfigDTO() {
+    /**
+     * 获取新增配置对话框输入的配置数据
+     */
+    public ConfigDTO getConfig() {
         configDTO.setModuleName((String) comboBox.getSelectedItem());
         configDTO.setYapiUrl(itemComponent.yapiTextArea.getText());
         configDTO.setProjectToken(itemComponent.projectTokenTextArea.getText());
