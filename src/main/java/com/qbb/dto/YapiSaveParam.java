@@ -98,8 +98,7 @@ public class YapiSaveParam implements Serializable {
      * 请求参数
      */
     private List req_params;
-
-
+    
     private String id;
     /**
      * 项目id
@@ -114,10 +113,6 @@ public class YapiSaveParam implements Serializable {
      * 菜单名称
      */
     private String menu;
-
-
-    public YapiSaveParam() {
-    }
 
     public YapiSaveParam(String token, String title, String path, String req_body_other, String res_body, Integer projectId, String yapiUrl, String desc) {
         this.token = token;
