@@ -81,6 +81,7 @@ public class ConfigComponent implements SearchableConfigurable {
         final ConfigDTO config = itemAddEditDialog.getConfig();
         if (!config.checkValid()) {
             Messages.showErrorDialog("编辑出错, 输入框内容不能为空!", "Error");
+            return;
         }
         boolean alreadyAdded = XUtils.stream(defaultModelList.elements()).anyMatch(it -> isAlreadyAdded(it, config));
         if (alreadyAdded) {
@@ -104,6 +105,7 @@ public class ConfigComponent implements SearchableConfigurable {
         final ConfigDTO config = itemAddEditDialog.getConfig();
         if (!config.checkValid()) {
             Messages.showErrorDialog("添加出错, 输入框内容不能为空!", "Error");
+            return;
         }
         boolean alreadyAdded = XUtils.stream(defaultModelList.elements()).anyMatch(it -> isAlreadyAdded(it, config));
         if (alreadyAdded) {
