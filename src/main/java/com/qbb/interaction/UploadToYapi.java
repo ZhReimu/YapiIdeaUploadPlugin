@@ -22,7 +22,6 @@ import com.qbb.upload.UploadYapi;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -63,15 +62,7 @@ public class UploadToYapi extends AnAction {
             if (psiFile == null) {
                 return;
             }
-            String virtualFile = psiFile.getVirtualFile().getPath();
-            final List<ConfigDTO> collect = configs.stream()
-                    .filter(it -> {
-                        if (!it.getProjectName().equals(project.getName())) {
-                            return false;
-                        }
-                        final String str = (File.separator + it.getProjectName() + File.separator) + (it.getModuleName().equals(it.getProjectName()) ? "" : (it.getModuleName() + File.separator));
-                        return virtualFile.contains(str);
-                    }).collect(Collectors.toList());
+            final List<ConfigDTO> collect = configs.stream().filter(it -> filterModule(it, project, psiFile)).collect(Collectors.toList());
             if (collect.isEmpty()) {
                 Messages.showErrorDialog("没有找到对应的yapi配置，请在菜单 > Preferences > Other setting > YapiUpload 添加", "Error");
                 return;
@@ -149,6 +140,21 @@ public class UploadToYapi extends AnAction {
                 }
             }
         }
+    }
+
+    /**
+     * 过滤掉非当前选中文件模块的配置<br/>
+     * 找到当前文件所在模块的配置
+     */
+    private static boolean filterModule(ConfigDTO config, Project project, PsiFile psiFile) {
+        String projectName = config.getProjectName();
+        if (!projectName.equals(project.getName())) {
+            return false;
+        }
+        String separator = "/";
+        String moduleName = config.getModuleName().equals(projectName) ? "" : (config.getModuleName() + separator);
+        final String str = (separator + projectName + separator) + moduleName;
+        return psiFile.getVirtualFile().getPath().contains(str);
     }
 
     /**
