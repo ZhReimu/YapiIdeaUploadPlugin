@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.util.ui.JBUI;
 import com.qbb.dto.ConfigDTO;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +45,7 @@ public class ItemAddEditDialog extends DialogWrapper {
 
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.anchor = GridBagConstraints.WEST;
-        gridBagConstraints.insets = new Insets(10, 10, 0, 0);
+        gridBagConstraints.insets = JBUI.insets(10, 10, 0, 0);
 
         final JLabel label = new JLabel("选择模块:");
         label.setAlignmentY(JComponent.LEFT_ALIGNMENT);
@@ -71,7 +72,7 @@ public class ItemAddEditDialog extends DialogWrapper {
         gridBagConstraints.fill = GridBagConstraints.HORIZONTAL;
         gridBagLayout.setConstraints(comboBox, gridBagConstraints);
 
-        gridBagConstraints.insets = new Insets(10, -10, 0, 0);
+        gridBagConstraints.insets = JBUI.insets(10, -10, 0, 0);
         gridBagConstraints.gridx = 1;
         gridBagConstraints.gridy = 8;
         gridBagConstraints.gridwidth = 20;
@@ -90,9 +91,9 @@ public class ItemAddEditDialog extends DialogWrapper {
     @Override
     public boolean isOK() {
         if (StringUtils.isEmpty(itemComponent.yapiTextArea.getText())
-        || StringUtils.isEmpty(itemComponent.projectTokenTextArea.getText())
-        || StringUtils.isEmpty(itemComponent.projectIdTextArea.getText())
-        || StringUtils.isEmpty((String) itemComponent.projectTypeComboBox.getSelectedItem())) {
+                || StringUtils.isEmpty(itemComponent.projectTokenTextArea.getText())
+                || StringUtils.isEmpty(itemComponent.projectIdTextArea.getText())
+                || StringUtils.isEmpty((String) itemComponent.projectTypeComboBox.getSelectedItem())) {
             return false;
         }
         return super.isOK();

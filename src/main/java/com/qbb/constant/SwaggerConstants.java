@@ -12,5 +12,5 @@ public interface SwaggerConstants {
 
     String API_PARAM = "io.swagger.annotations.ApiParam";
 
-    String API="io.swagger.annotations.Api";
+    String API = "io.swagger.annotations.Api";
 }

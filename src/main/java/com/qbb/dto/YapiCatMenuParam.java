@@ -16,7 +16,7 @@ public class YapiCatMenuParam implements Serializable {
     /**
      * 描述
      */
-    private String desc="工具上传临时文件夹";
+    private String desc = "工具上传临时文件夹";
     /**
      * 名字
      */
@@ -32,7 +32,41 @@ public class YapiCatMenuParam implements Serializable {
     /**
      * 父级菜单id
      */
-    private Integer parent_id=-1;
+    private Integer parent_id = -1;
+
+    public YapiCatMenuParam() {
+    }
+
+    public YapiCatMenuParam(String desc, String name, Integer project_id, String token) {
+        this.desc = desc;
+        this.name = name;
+        this.project_id = project_id;
+        this.token = token;
+    }
+
+    public YapiCatMenuParam(Integer project_id, String token) {
+        this.project_id = project_id;
+        this.token = token;
+    }
+
+    public YapiCatMenuParam(String name, Integer project_id, String token) {
+        this.name = name;
+        this.project_id = project_id;
+        this.token = token;
+        if (Strings.isNullOrEmpty(name)) {
+            this.name = YapiConstant.menu;
+        }
+    }
+
+    public YapiCatMenuParam(String name, Integer project_id, String token, Integer parent_id) {
+        this.name = name;
+        this.project_id = project_id;
+        this.token = token;
+        this.parent_id = parent_id;
+        if (Objects.isNull(parent_id)) {
+            this.parent_id = -1;
+        }
+    }
 
     public String getDesc() {
         return desc;
@@ -72,40 +106,5 @@ public class YapiCatMenuParam implements Serializable {
 
     public void setParent_id(Integer parent_id) {
         this.parent_id = parent_id;
-    }
-
-    public YapiCatMenuParam() {
-    }
-
-
-    public YapiCatMenuParam(String desc, String name, Integer project_id, String token) {
-        this.desc = desc;
-        this.name = name;
-        this.project_id = project_id;
-        this.token = token;
-    }
-
-    public YapiCatMenuParam(Integer project_id, String token) {
-        this.project_id = project_id;
-        this.token = token;
-    }
-
-    public YapiCatMenuParam(String name, Integer project_id, String token) {
-        this.name = name;
-        this.project_id = project_id;
-        this.token = token;
-        if(Strings.isNullOrEmpty(name)){
-            this.name= YapiConstant.menu;
-        }
-    }
-
-    public YapiCatMenuParam(String name, Integer project_id, String token, Integer parent_id) {
-        this.name = name;
-        this.project_id = project_id;
-        this.token = token;
-        this.parent_id = parent_id;
-        if(Objects.isNull(parent_id)){
-            this.parent_id=-1;
-        }
     }
 }

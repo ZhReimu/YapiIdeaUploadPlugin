@@ -39,6 +39,9 @@ public class YapiDubboDTO implements Serializable {
     private String status;
 
 
+    public YapiDubboDTO() {
+    }
+
     public String getPath() {
         return path;
     }
@@ -62,7 +65,6 @@ public class YapiDubboDTO implements Serializable {
     public void setTitle(String title) {
         this.title = title;
     }
-
 
     public String getResponse() {
         return response;
@@ -94,8 +96,5 @@ public class YapiDubboDTO implements Serializable {
 
     public void setStatus(String status) {
         this.status = status;
-    }
-
-    public YapiDubboDTO() {
     }
 }

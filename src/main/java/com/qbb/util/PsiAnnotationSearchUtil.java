@@ -3,11 +3,7 @@ package com.qbb.util;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiAnnotationOwner;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -191,7 +187,6 @@ public class PsiAnnotationSearchUtil {
         }
         return false;
     }
-
 
 
     /**

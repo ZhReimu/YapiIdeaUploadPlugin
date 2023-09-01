@@ -29,7 +29,6 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -52,24 +51,24 @@ import java.util.Map;
  * @date 2018/1/26.
  */
 public class HttpClientUtil {
-    private static int socketTimeout = 10000;
-    private static int connectionTimeout = 10000;
-    private static int connectionRequestTimeout = 10000;
-    private static int maxTotal = 100;
-    private static int defaultMaxPerRoute = 100;
+    private static final int socketTimeout = 10000;
+    private static final int connectionTimeout = 10000;
+    private static final int connectionRequestTimeout = 10000;
+    private static final int maxTotal = 100;
+    private static final int defaultMaxPerRoute = 100;
 
-    private  static RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(socketTimeout)
+    private static final RequestConfig requestConfig = RequestConfig.custom().setSocketTimeout(socketTimeout)
             .setConnectTimeout(connectionTimeout)
             .setConnectionRequestTimeout(connectionRequestTimeout)
             .build();
 
-    private static volatile  CloseableHttpClient httpclient;
+    private static volatile CloseableHttpClient httpclient;
     private static CloseableHttpClient tlsClient;//TLSv1.2协议对应client
 
-    private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 
-    private HttpClientUtil(){
+    private HttpClientUtil() {
 
     }
 
@@ -99,15 +98,124 @@ public class HttpClientUtil {
 
         //支持TLSv1.2协议
         Registry<ConnectionSocketFactory> tlsRegistry
-                        = RegistryBuilder.<ConnectionSocketFactory>create().register("http",
-                        PlainConnectionSocketFactory.INSTANCE).register("https",
-                        new SSLConnectionSocketFactory(createIgnoreVerifySSL())).build();
+                = RegistryBuilder.<ConnectionSocketFactory>create().register("http",
+                PlainConnectionSocketFactory.INSTANCE).register("https",
+                new SSLConnectionSocketFactory(createIgnoreVerifySSL())).build();
         PoolingHttpClientConnectionManager tlsCM = new PoolingHttpClientConnectionManager(tlsRegistry);
         tlsCM.setMaxTotal(maxTotal);
         tlsCM.setDefaultMaxPerRoute(defaultMaxPerRoute);
         tlsClient = HttpClients.custom()
-                        .setConnectionManager(tlsCM).setDefaultRequestConfig(requestConfig)
-                        .build();
+                .setConnectionManager(tlsCM).setDefaultRequestConfig(requestConfig)
+                .build();
+    }
+
+    public static CloseableHttpClient getHttpclient() {
+        if (httpclient == null) {
+            synchronized (HttpClientUtil.class) {
+                if (httpclient == null) {
+                    try {
+                        init();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+        return httpclient;
+    }
+
+    /**
+     * 获取HttpGet
+     *
+     * @param url
+     * @param accept
+     * @param contentType
+     * @return HttpGet
+     * @throws IOException
+     */
+    public static HttpGet getHttpGet(String url, String accept, String contentType) throws IOException {
+        HttpGet httpGet = null;
+        httpGet = new HttpGet(url);
+        if (accept != null) {
+            httpGet.setHeader("Accept", accept);
+        }
+
+        if (contentType != null) {
+            httpGet.setHeader("Content-Type", contentType);
+        }
+        return httpGet;
+    }
+
+    /**
+     * 执行 HttpPost 请求
+     *
+     * @param httpPost
+     * @return
+     * @throws IOException
+     */
+    public static CloseableHttpResponse executeHttpPost(HttpPost httpPost) throws IOException {
+        return httpclient.execute(httpPost);
+    }
+
+    /**
+     * 执行 HttpGet 请求
+     *
+     * @param httpGet
+     * @return
+     * @throws IOException
+     */
+    public static CloseableHttpResponse executeHttpGet(HttpGet httpGet) throws IOException {
+        return httpclient.execute(httpGet);
+    }
+
+    /**
+     * CloseableHttpResponse 转字符串
+     *
+     * @param response
+     * @param charset
+     * @return String
+     * @throws IOException
+     */
+    public static String ObjectToString(CloseableHttpResponse response, String charset) throws IOException {
+        try {
+            HttpEntity resEntity = response.getEntity();
+            String responseBaby = null;
+            if (resEntity != null) {
+                responseBaby = EntityUtils.toString(resEntity, charset);
+            }
+            return responseBaby;
+        } finally {
+            if (response != null) {
+                response.close();
+            }
+        }
+    }
+
+    public static SSLContext createIgnoreVerifySSL() throws NoSuchAlgorithmException, KeyManagementException {
+        SSLContext sc = SSLContext.getInstance("TLSv1.2");
+
+        // 实现一个X509TrustManager接口，用于绕过验证，不用修改里面的方法
+        X509TrustManager trustManager = new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(
+                    X509Certificate[] paramArrayOfX509Certificate,
+                    String paramString) throws CertificateException {
+            }
+
+            @Override
+            public void checkServerTrusted(
+                    X509Certificate[] paramArrayOfX509Certificate,
+                    String paramString) throws CertificateException {
+            }
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+        };
+
+        sc.init(null, new TrustManager[]{trustManager}, null);
+        return sc;
     }
 
     @PreDestroy
@@ -120,25 +228,10 @@ public class HttpClientUtil {
         }
     }
 
-    public static CloseableHttpClient getHttpclient() {
-        if(httpclient==null){
-            synchronized (HttpClientUtil.class){
-                if(httpclient==null){
-                    try {
-                        init();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-        return httpclient;
-    }
-
     public CloseableHttpClient getTlsClient() {
-        if(tlsClient==null){
-            synchronized (HttpClientUtil.class){
-                if(tlsClient==null){
+        if (tlsClient == null) {
+            synchronized (HttpClientUtil.class) {
+                if (tlsClient == null) {
                     try {
                         init();
                     } catch (Exception e) {
@@ -148,37 +241,6 @@ public class HttpClientUtil {
             }
         }
         return tlsClient;
-    }
-
-
-
-    private static class StringResponseHandler implements
-            ResponseHandler<String> {
-
-        private final String charset;
-
-        public StringResponseHandler(String charset) {
-            this.charset = charset;
-        }
-
-        @Override
-        public String handleResponse(HttpResponse response)
-                throws ClientProtocolException, IOException {
-            StatusLine statusLine = response.getStatusLine();
-            HttpEntity entity = response.getEntity();
-            if (statusLine.getStatusCode() >= 300) {
-                EntityUtils.consume(entity);
-                throw new HttpResponseException(statusLine.getStatusCode(),
-                        statusLine.getReasonPhrase());
-            }
-            if (entity != null) {
-                return (charset == null) ? EntityUtils.toString(entity)
-                        : EntityUtils.toString(entity, charset);
-            } else {
-                return null;
-            }
-        }
-
     }
 
     /**
@@ -263,51 +325,6 @@ public class HttpClientUtil {
     }
 
     /**
-     * 获取HttpGet
-     *
-     * @param url
-     * @param accept
-     * @param contentType
-     * @return HttpGet
-     * @throws IOException
-     */
-    public static HttpGet getHttpGet(String url, String accept, String contentType) throws IOException {
-        HttpGet httpGet = null;
-        httpGet = new HttpGet(url);
-        if (accept != null) {
-            httpGet.setHeader("Accept", accept);
-        }
-
-        if (contentType != null) {
-            httpGet.setHeader("Content-Type", contentType);
-        }
-        return httpGet;
-    }
-
-    /**
-     * 执行 HttpPost 请求
-     *
-     * @param httpPost
-     * @return
-     * @throws IOException
-     */
-    public static CloseableHttpResponse executeHttpPost(HttpPost httpPost) throws IOException {
-        return httpclient.execute(httpPost);
-    }
-
-
-    /**
-     * 执行 HttpGet 请求
-     *
-     * @param httpGet
-     * @return
-     * @throws IOException
-     */
-    public static CloseableHttpResponse executeHttpGet(HttpGet httpGet) throws IOException {
-        return httpclient.execute(httpGet);
-    }
-
-    /**
      * 执行 tlsHttpPost 请求
      *
      * @param httpPost
@@ -328,7 +345,6 @@ public class HttpClientUtil {
     public CloseableHttpResponse executeTlsHttpGet(HttpGet httpGet) throws IOException {
         return tlsClient.execute(httpGet);
     }
-
 
     /**
      * CloseableHttpResponse 转byte 数组
@@ -360,54 +376,33 @@ public class HttpClientUtil {
         return null;
     }
 
-    /**
-     * CloseableHttpResponse 转字符串
-     *
-     * @param response
-     * @param charset
-     * @return String
-     * @throws IOException
-     */
-    public static  String ObjectToString(CloseableHttpResponse response, String charset) throws IOException {
-        try {
-            HttpEntity resEntity = response.getEntity();
-            String responseBaby = null;
-            if (resEntity != null) {
-                responseBaby = EntityUtils.toString(resEntity, charset);
-            }
-            return responseBaby;
-        } finally {
-            if (response != null) {
-                response.close();
-            }
+    private static class StringResponseHandler implements
+            ResponseHandler<String> {
+
+        private final String charset;
+
+        public StringResponseHandler(String charset) {
+            this.charset = charset;
         }
-    }
 
-    public static SSLContext createIgnoreVerifySSL() throws NoSuchAlgorithmException, KeyManagementException {
-        SSLContext sc = SSLContext.getInstance("TLSv1.2");
-
-        // 实现一个X509TrustManager接口，用于绕过验证，不用修改里面的方法
-        X509TrustManager trustManager = new X509TrustManager() {
-            @Override
-            public void checkClientTrusted(
-                            X509Certificate[] paramArrayOfX509Certificate,
-                            String paramString) throws CertificateException {
+        @Override
+        public String handleResponse(HttpResponse response)
+                throws IOException {
+            StatusLine statusLine = response.getStatusLine();
+            HttpEntity entity = response.getEntity();
+            if (statusLine.getStatusCode() >= 300) {
+                EntityUtils.consume(entity);
+                throw new HttpResponseException(statusLine.getStatusCode(),
+                        statusLine.getReasonPhrase());
             }
-
-            @Override
-            public void checkServerTrusted(
-                            X509Certificate[] paramArrayOfX509Certificate,
-                            String paramString) throws CertificateException {
-            }
-
-            @Override
-            public X509Certificate[] getAcceptedIssuers() {
+            if (entity != null) {
+                return (charset == null) ? EntityUtils.toString(entity)
+                        : EntityUtils.toString(entity, charset);
+            } else {
                 return null;
             }
-        };
+        }
 
-        sc.init(null, new TrustManager[] { trustManager }, null);
-        return sc;
     }
 
 

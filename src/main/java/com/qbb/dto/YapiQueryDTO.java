@@ -8,11 +8,11 @@ import java.io.Serializable;
  * @author chengsheng@qbb6.com
  * @date 2019/2/11 5:05 PM
  */
-public class YapiQueryDTO implements Serializable{
+public class YapiQueryDTO implements Serializable {
     /**
      * 是否必填
      */
-    private String required="1";
+    private String required = "1";
 
 
     private String _id;
@@ -27,8 +27,17 @@ public class YapiQueryDTO implements Serializable{
     /**
      * 参数名字
      */
-    private String  name;
+    private String name;
 
+
+    public YapiQueryDTO() {
+    }
+
+    public YapiQueryDTO(String desc, String example, String name) {
+        this.desc = desc;
+        this.example = example;
+        this.name = name;
+    }
 
     public String getRequired() {
         return required;
@@ -67,15 +76,6 @@ public class YapiQueryDTO implements Serializable{
     }
 
     public void setName(String name) {
-        this.name = name;
-    }
-
-    public YapiQueryDTO() {
-    }
-
-    public YapiQueryDTO( String desc, String example, String name) {
-        this.desc = desc;
-        this.example = example;
         this.name = name;
     }
 }

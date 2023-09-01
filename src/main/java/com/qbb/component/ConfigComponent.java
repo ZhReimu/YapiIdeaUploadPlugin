@@ -28,7 +28,9 @@ import java.util.UUID;
  */
 public class ConfigComponent implements SearchableConfigurable {
 
-    private ConfigPersistence configPersistence = ConfigPersistence.getInstance();
+    private final ConfigPersistence configPersistence = ConfigPersistence.getInstance();
+    private JBList<ConfigDTO> list;
+    private DefaultListModel<ConfigDTO> defaultListModel;
 
     @NotNull
     @Override
@@ -41,10 +43,6 @@ public class ConfigComponent implements SearchableConfigurable {
     public String getDisplayName() {
         return "YapiUpload";
     }
-
-    private JBList<ConfigDTO> list;
-
-    private DefaultListModel<ConfigDTO> defaultListModel;
 
     @Nullable
     @Override

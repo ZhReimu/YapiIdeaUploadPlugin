@@ -87,7 +87,7 @@ public class KV<K, V> extends LinkedHashMap<K, V> {
      */
     public boolean isTrue(Object key) {
         Object value = get(key);
-        return (value instanceof Boolean && ((Boolean) value == true));
+        return (value instanceof Boolean && ((Boolean) value));
     }
 
     /**
@@ -95,7 +95,7 @@ public class KV<K, V> extends LinkedHashMap<K, V> {
      */
     public boolean isFalse(Object key) {
         Object value = get(key);
-        return (value instanceof Boolean && ((Boolean) value == false));
+        return (value instanceof Boolean && (!((Boolean) value)));
     }
 
     public String toJson() {

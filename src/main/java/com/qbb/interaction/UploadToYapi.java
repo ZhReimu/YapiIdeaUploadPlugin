@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  */
 public class UploadToYapi extends AnAction {
 
-    private static NotificationGroup notificationGroup;
+    private static final NotificationGroup notificationGroup;
 
     static {
         notificationGroup = new NotificationGroup("Java2Json.NotificationGroup", NotificationDisplayType.BALLOON, true);
@@ -43,7 +43,7 @@ public class UploadToYapi extends AnAction {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-        Editor editor = (Editor) e.getDataContext().getData(CommonDataKeys.EDITOR);
+        Editor editor = e.getDataContext().getData(CommonDataKeys.EDITOR);
 
         Project project = editor.getProject();
         String projectToken = null;
@@ -55,8 +55,8 @@ public class UploadToYapi extends AnAction {
         // 获取配置
         try {
             final java.util.List<ConfigDTO> configs = ServiceManager.getService(ConfigPersistence.class).getConfigs();
-            if(configs == null || configs.size() == 0){
-                Messages.showErrorDialog("请先去配置界面配置yapi配置","获取配置失败！");
+            if (configs == null || configs.size() == 0) {
+                Messages.showErrorDialog("请先去配置界面配置yapi配置", "获取配置失败！");
                 return;
             }
             PsiFile psiFile = e.getDataContext().getData(CommonDataKeys.PSI_FILE);
@@ -79,7 +79,7 @@ public class UploadToYapi extends AnAction {
             yapiUrl = configDTO.getYapiUrl();
             projectType = configDTO.getProjectType();
         } catch (Exception e2) {
-            Messages.showErrorDialog("获取配置失败，异常:  " + e2.getMessage(),"获取配置失败！");
+            Messages.showErrorDialog("获取配置失败，异常:  " + e2.getMessage(), "获取配置失败！");
             return;
         }
 //        // 配置校验
@@ -104,14 +104,14 @@ public class UploadToYapi extends AnAction {
                         // 上传
                         YapiResponse yapiResponse = new UploadYapi().uploadSave(yapiSaveParam, null, project.getBasePath());
                         if (yapiResponse.getErrcode() != 0) {
-                            Messages.showErrorDialog("上传失败！异常:  " + yapiResponse.getErrmsg(),"上传失败！");
+                            Messages.showErrorDialog("上传失败！异常:  " + yapiResponse.getErrmsg(), "上传失败！");
                         } else {
                             String url = yapiUrl + "/project/" + projectId + "/interface/api/cat_" + yapiResponse.getCatId();
                             this.setClipboard(url);
-                            Messages.showInfoMessage("上传成功！接口文档url地址:  " + url,"上传成功！");
+                            Messages.showInfoMessage("上传成功！接口文档url地址:  " + url, "上传成功！");
                         }
                     } catch (Exception e1) {
-                        Messages.showErrorDialog("上传失败！异常:  " + e1,"上传失败！");
+                        Messages.showErrorDialog("上传失败！异常:  " + e1, "上传失败！");
                     }
                 }
             }
@@ -134,14 +134,14 @@ public class UploadToYapi extends AnAction {
                         // 上传
                         YapiResponse yapiResponse = new UploadYapi().uploadSave(yapiSaveParam, attachUpload, project.getBasePath());
                         if (yapiResponse.getErrcode() != 0) {
-                            Messages.showInfoMessage("上传失败，原因:  " + yapiResponse.getErrmsg(),"上传失败！");
+                            Messages.showInfoMessage("上传失败，原因:  " + yapiResponse.getErrmsg(), "上传失败！");
                         } else {
                             String url = yapiUrl + "/project/" + projectId + "/interface/api/cat_" + yapiResponse.getCatId();
                             this.setClipboard(url);
-                            Messages.showInfoMessage("上传成功！接口文档url地址:  " + url,"上传成功！");
+                            Messages.showInfoMessage("上传成功！接口文档url地址:  " + url, "上传成功！");
                         }
                     } catch (Exception e1) {
-                        Messages.showErrorDialog("上传失败！异常:  " + e1,"上传失败！");
+                        Messages.showErrorDialog("上传失败！异常:  " + e1, "上传失败！");
                     }
                 }
             }

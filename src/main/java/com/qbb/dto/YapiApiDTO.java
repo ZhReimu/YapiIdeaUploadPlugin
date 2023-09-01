@@ -10,7 +10,7 @@ import java.util.Map;
  * @author chengsheng@qbb6.com
  * @date 2019/2/11 3:16 PM
  */
-public class YapiApiDTO implements Serializable{
+public class YapiApiDTO implements Serializable {
     /**
      * 路径
      */
@@ -39,7 +39,7 @@ public class YapiApiDTO implements Serializable{
     /**
      * 请求方法
      */
-    private String method="POST";
+    private String method = "POST";
 
     /**
      * 请求 类型 raw,form,json
@@ -48,7 +48,7 @@ public class YapiApiDTO implements Serializable{
     /**
      * 请求form
      */
-    private List<Map<String,String>> req_body_form;
+    private List<Map<String, String>> req_body_form;
 
     /**
      * 描述
@@ -69,6 +69,9 @@ public class YapiApiDTO implements Serializable{
      */
     private String status;
 
+
+    public YapiApiDTO() {
+    }
 
     public String getPath() {
         return path;
@@ -146,6 +149,9 @@ public class YapiApiDTO implements Serializable{
         return req_body_form;
     }
 
+    public void setReq_body_form(List<Map<String, String>> req_body_form) {
+        this.req_body_form = req_body_form;
+    }
 
     public List getReq_params() {
         return req_params;
@@ -153,10 +159,6 @@ public class YapiApiDTO implements Serializable{
 
     public void setReq_params(List req_params) {
         this.req_params = req_params;
-    }
-
-    public void setReq_body_form(List<Map<String, String>> req_body_form) {
-        this.req_body_form = req_body_form;
     }
 
     public String getMenu() {
@@ -167,16 +169,12 @@ public class YapiApiDTO implements Serializable{
         this.menu = menu;
     }
 
-
     public String getStatus() {
         return status;
     }
 
     public void setStatus(String status) {
         this.status = status;
-    }
-
-    public YapiApiDTO() {
     }
 
 

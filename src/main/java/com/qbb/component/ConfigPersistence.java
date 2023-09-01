@@ -21,6 +21,12 @@ import java.util.List;
 public class ConfigPersistence implements PersistentStateComponent<List<ConfigDTO>> {
 
 
+    private List<ConfigDTO> configs;
+
+    public static ConfigPersistence getInstance() {
+        return ServiceManager.getService(ConfigPersistence.class);
+    }
+
     public List<ConfigDTO> getConfigs() {
         return configs;
     }
@@ -28,13 +34,6 @@ public class ConfigPersistence implements PersistentStateComponent<List<ConfigDT
     public void setConfigs(List<ConfigDTO> configs) {
         this.configs = configs;
     }
-
-    private List<ConfigDTO> configs;
-
-    public static ConfigPersistence getInstance(){
-        return ServiceManager.getService(ConfigPersistence.class);
-    }
-
 
     @Nullable
     @Override

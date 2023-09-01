@@ -26,6 +26,22 @@ public class YapiResponse implements Serializable {
      */
     private String catId;
 
+    public YapiResponse() {
+        this.errcode = 0;
+        this.errmsg = "success";
+    }
+
+    public YapiResponse(Object data) {
+        this.errcode = 0;
+        this.errmsg = "success";
+        this.data = data;
+    }
+
+    public YapiResponse(Integer errcode, String errmsg) {
+        this.errcode = errcode;
+        this.errmsg = errmsg;
+    }
+
     public Integer getErrcode() {
         return errcode;
     }
@@ -56,21 +72,5 @@ public class YapiResponse implements Serializable {
 
     public void setCatId(String catId) {
         this.catId = catId;
-    }
-
-    public YapiResponse() {
-        this.errcode=0;
-        this.errmsg="success";
-    }
-
-    public YapiResponse(Object data) {
-        this.errcode=0;
-        this.errmsg="success";
-        this.data = data;
-    }
-
-    public YapiResponse(Integer errcode, String errmsg) {
-        this.errcode = errcode;
-        this.errmsg = errmsg;
     }
 }

@@ -1,5 +1,6 @@
 package com.qbb.component;
 
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.qbb.dto.ConfigDTO;
 import sun.swing.DefaultLookup;
@@ -20,21 +21,16 @@ public class ItemComponent extends JPanel implements ListCellRenderer<ConfigDTO>
     private static final int TEXT_AREA_COLUMNS = 5;
 
     private static final int TEXT_AREA_FONTSIZE = 15;
-
-    JLabel title = null;
-
     final JLabel yapiJLabel;
     final JTextField yapiTextArea;
-
     final JLabel projectTokenJLabel;
     final JTextField projectTokenTextArea;
-
     final JLabel projectIdJLabel;
     final JTextField projectIdTextArea;
-
     final JLabel projectTypeJLabel;
     final JComboBox projectTypeComboBox;
     final JTextField projectTypeTextArea;
+    JLabel title = null;
 
     public ItemComponent() {
         this(null, false);
@@ -47,8 +43,8 @@ public class ItemComponent extends JPanel implements ListCellRenderer<ConfigDTO>
         //实例化这个对象用来对组件进行管理
         GridBagConstraints gridBagConstraints = new GridBagConstraints();
         gridBagConstraints.anchor = GridBagConstraints.WEST;
-        gridBagConstraints.insets = new Insets(10, 10, 0, 0);
-        Border border = BorderFactory.createLineBorder(Color.BLACK);
+        gridBagConstraints.insets = JBUI.insets(10, 10, 0, 0);
+        Border border = BorderFactory.createLineBorder(JBColor.BLACK);
         yapiJLabel = new JLabel("yapi地址:");
         yapiTextArea = new JTextField();
         if (isInDialog) {
@@ -56,7 +52,7 @@ public class ItemComponent extends JPanel implements ListCellRenderer<ConfigDTO>
         }
         yapiTextArea.setFont(new Font(null, Font.PLAIN, TEXT_AREA_FONTSIZE));
         yapiTextArea.setSize(10, 10);
-        yapiJLabel.setAlignmentY(yapiJLabel.LEFT_ALIGNMENT);
+        yapiJLabel.setAlignmentY(LEFT_ALIGNMENT);
 
         projectTokenJLabel = new JLabel("项目Token:");
         projectTokenTextArea = new JTextField();
@@ -64,7 +60,7 @@ public class ItemComponent extends JPanel implements ListCellRenderer<ConfigDTO>
             projectTokenTextArea.setBorder(border);
         }
         projectTokenTextArea.setFont(new Font(null, Font.PLAIN, TEXT_AREA_FONTSIZE));
-        projectTokenJLabel.setAlignmentY(projectTokenJLabel.LEFT_ALIGNMENT);
+        projectTokenJLabel.setAlignmentY(LEFT_ALIGNMENT);
 
         projectIdJLabel = new JLabel("项目ID:");
         projectIdTextArea = new JTextField();
@@ -72,7 +68,7 @@ public class ItemComponent extends JPanel implements ListCellRenderer<ConfigDTO>
             projectIdTextArea.setBorder(border);
         }
         projectIdTextArea.setFont(new Font(null, Font.PLAIN, TEXT_AREA_FONTSIZE));
-        projectIdJLabel.setAlignmentY(projectIdJLabel.LEFT_ALIGNMENT);
+        projectIdJLabel.setAlignmentY(LEFT_ALIGNMENT);
 
         projectTypeJLabel = new JLabel("项目类型:");
         String[] select = {"api", "dubbo"};
@@ -80,7 +76,7 @@ public class ItemComponent extends JPanel implements ListCellRenderer<ConfigDTO>
         projectTypeComboBox.setModel(new DefaultComboBoxModel(select));
         projectTypeComboBox.setSelectedItem("api");
         projectTypeComboBox.setBounds(15, 15, 100, 25);
-        projectTypeJLabel.setAlignmentY(projectTypeJLabel.LEFT_ALIGNMENT);
+        projectTypeJLabel.setAlignmentY(LEFT_ALIGNMENT);
 
         projectTypeTextArea = new JTextField();
         if (isInDialog) {
@@ -90,13 +86,13 @@ public class ItemComponent extends JPanel implements ListCellRenderer<ConfigDTO>
 
         if (!isInDialog) {
             title = new JLabel("哪个项目模块", JLabel.CENTER);
-            title.setForeground(Color.LIGHT_GRAY);
+            title.setForeground(JBColor.LIGHT_GRAY);
             gridBagConstraints.gridwidth = GridBagConstraints.REMAINDER;
             gridBagConstraints.fill = GridBagConstraints.BOTH;
-            gridBagConstraints.insets = new Insets(20, 10, 0, 0);
+            gridBagConstraints.insets = JBUI.insets(20, 10, 0, 0);
             gridBagLayout.setConstraints(title, gridBagConstraints);
 
-            gridBagConstraints.insets = new Insets(10, 10, 0, 0);
+            gridBagConstraints.insets = JBUI.insets(10, 10, 0, 0);
             gridBagConstraints.anchor = GridBagConstraints.WEST;
         }
 
@@ -180,8 +176,7 @@ public class ItemComponent extends JPanel implements ListCellRenderer<ConfigDTO>
             bg = DefaultLookup.getColor(this, ui, "List.dropCellBackground");
             fg = DefaultLookup.getColor(this, ui, "List.dropCellForeground");
             isSelected = true;
-        }
-        else {
+        } else {
             bg = isSelected ? list.getSelectionBackground() : list.getBackground();
             fg = isSelected ? list.getSelectionForeground() : list.getForeground();
         }

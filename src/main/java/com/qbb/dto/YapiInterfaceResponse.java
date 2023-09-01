@@ -8,7 +8,7 @@ import java.io.Serializable;
  * @author chengsheng@qbb6.com
  * @date 2019/7/28 10:17 AM
  */
-public class YapiInterfaceResponse implements Serializable{
+public class YapiInterfaceResponse implements Serializable {
     /**
      * 描述
      */
