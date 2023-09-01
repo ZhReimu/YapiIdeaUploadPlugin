@@ -7,42 +7,41 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * @description: kv
- * @author: chengsheng@qbb6.com
- * @date: 2018/10/27
+ * @author chengsheng@qbb6.com
+ * @since 2018/10/27
  */
 public class KV<K, V> extends LinkedHashMap<K, V> {
-    public <K, V> KV() {
+
+    @SuppressWarnings("unchecked")
+    public static <K, V> KV<K, V> by(K key, V value) {
+        return (KV<K, V>) create().set(key, value);
     }
 
-    public static <K, V> KV by(K key, V value) {
-        return new KV().set(key, value);
+    public static <K, V> KV<K, V> create() {
+        return new KV<>();
     }
 
-    public static <K, V> KV create() {
-        return new KV();
-    }
-
-    public KV set(K key, V value) {
+    public KV<K, V> set(K key, V value) {
         super.put(key, value);
         return this;
     }
 
-    public KV set(Map map) {
+    public KV<K, V> set(Map<K, V> map) {
         super.putAll(map);
         return this;
     }
 
-    public KV set(KV KV) {
-        super.putAll(KV);
+    public KV<K, V> set(KV<K, V> kv) {
+        super.putAll(kv);
         return this;
     }
 
-    public KV delete(Object key) {
+    public KV<K, V> delete(Object key) {
         super.remove(key);
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T getAs(Object key) {
         return (T) get(key);
     }
@@ -66,7 +65,6 @@ public class KV<K, V> extends LinkedHashMap<K, V> {
     public Float getFloat(Object key) {
         return (Float) get(key);
     }
-
 
     /**
      * key 存在，并且 value 不为 null
@@ -109,6 +107,5 @@ public class KV<K, V> extends LinkedHashMap<K, V> {
     public boolean equals(Object KV) {
         return KV instanceof KV && super.equals(KV);
     }
-
-
+    
 }

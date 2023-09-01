@@ -3,6 +3,7 @@ package com.qbb.component;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.util.ui.JBUI;
 import com.qbb.dto.ConfigDTO;
@@ -17,15 +18,14 @@ import java.util.stream.Collectors;
 
 public class ItemAddEditDialog extends DialogWrapper {
 
-    private final boolean isAdd;
     private final ConfigDTO configDTO;
     private final String[] moduleArr;
-    private JComboBox comboBox;
+    private ComboBox<String> comboBox;
     private ItemComponent itemComponent;
 
     public ItemAddEditDialog(ConfigDTO configDTO, Project project) {
         super(true); // use current window as parent
-        isAdd = configDTO == null;
+        boolean isAdd = configDTO == null;
         setTitle((configDTO == null ? "Add " : "Edit ") + project.getName() + " Project");
         this.configDTO = isAdd ? new ConfigDTO() : configDTO;
         List<String> modules = Arrays.stream(ModuleManager.getInstance(project).getModules()).map(Module::getName).collect(Collectors.toList());
@@ -36,6 +36,7 @@ public class ItemAddEditDialog extends DialogWrapper {
 
     @Nullable
     @Override
+    @SuppressWarnings("SuspiciousNameCombination")
     protected JComponent createCenterPanel() {
 
         JPanel panel = new JPanel();
@@ -50,8 +51,8 @@ public class ItemAddEditDialog extends DialogWrapper {
         final JLabel label = new JLabel("选择模块:");
         label.setAlignmentY(JComponent.LEFT_ALIGNMENT);
 
-        comboBox = new JComboBox();
-        comboBox.setModel(new DefaultComboBoxModel(moduleArr));
+        comboBox = new ComboBox<>();
+        comboBox.setModel(new DefaultComboBoxModel<>(moduleArr));
         comboBox.setBounds(15, 15, 100, 35);
 
         itemComponent = new ItemComponent(configDTO, true);

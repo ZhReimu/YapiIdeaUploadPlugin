@@ -35,13 +35,9 @@ public class BuildJsonForDubbo {
 
     /**
      * 获得对象属性
-     *
-     * @param psiClass
-     * @param project
-     * @return
      */
-    public static KV getFields(PsiClass psiClass, Project project) {
-        KV kv = KV.create();
+    public static KV<String, Object> getFields(PsiClass psiClass, Project project) {
+        KV<String, Object> kv = KV.create();
         if (psiClass != null) {
             String pName = psiClass.getName();
             for (PsiField field : psiClass.getAllFields()) {
