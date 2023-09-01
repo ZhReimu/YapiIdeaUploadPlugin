@@ -1,12 +1,10 @@
 package com.qbb.interaction;
 
-import com.google.common.base.Strings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.Messages;
 import com.qbb.builder.BuildJsonForDubbo;
 import com.qbb.builder.BuildJsonForYapi;
 import com.qbb.constant.ProjectTypeConstant;
-import com.qbb.constant.YapiConstant;
 import com.qbb.dto.*;
 import com.qbb.upload.UploadYapi;
 
@@ -68,11 +66,6 @@ public enum ApiUploadersEnum {
         if (yapiApiDTOS != null) {
             for (YapiApiDTO yapiApiDTO : yapiApiDTOS) {
                 YapiSaveParam yapiSaveParam = YapiSaveParam.ofApi(yapiApiDTO, projectToken, projectId, yapiUrl);
-                if (!Strings.isNullOrEmpty(yapiApiDTO.getMenu())) {
-                    yapiSaveParam.setMenu(yapiApiDTO.getMenu());
-                } else {
-                    yapiSaveParam.setMenu(YapiConstant.menu);
-                }
                 return upload(yapiSaveParam, config);
             }
         }
@@ -82,7 +75,7 @@ public enum ApiUploadersEnum {
     private static String upload(YapiSaveParam yapiSaveParam, ConfigDTO config) {
         try {
             // 上传
-            YapiResponse yapiResponse = new UploadYapi().uploadSave(yapiSaveParam, null, null);
+            YapiResponse<?> yapiResponse = UploadYapi.uploadSave(yapiSaveParam, null, null);
             if (yapiResponse.getErrcode() != 0) {
                 Messages.showInfoMessage("上传失败，原因:  " + yapiResponse.getErrmsg(), "上传失败！");
             } else {

@@ -223,7 +223,7 @@ public class BuildJsonForYapi {
                 if (codeSet.size() > 0) {
                     FileToZipUtil.toZip(codeSet, project.getBasePath() + codeFileName, true);
                     if (!Strings.isNullOrEmpty(attachUpload)) {
-                        String fileUrl = new UploadYapi().uploadFile(attachUpload, project.getBasePath() + codeFileName);
+                        String fileUrl = UploadYapi.uploadFile(attachUpload, project.getBasePath() + codeFileName);
                         if (!Strings.isNullOrEmpty(fileUrl)) {
                             yapiApiDTO.setDesc("java类:<a href='" + fileUrl + "'>下载地址</a><br/>" + yapiApiDTO.getDesc());
                         }

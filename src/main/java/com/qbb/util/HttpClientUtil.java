@@ -4,7 +4,6 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.StatusLine;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.config.RequestConfig;
@@ -24,7 +23,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.TrustStrategy;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +36,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +60,7 @@ public class HttpClientUtil {
             .build();
 
     private static volatile CloseableHttpClient httpclient;
-    private static CloseableHttpClient tlsClient;//TLSv1.2协议对应client
+    private static volatile CloseableHttpClient tlsClient;//TLSv1.2协议对应client
 
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -77,13 +74,12 @@ public class HttpClientUtil {
      */
     private static void init() throws Exception {
         SSLContextBuilder builder = new SSLContextBuilder();
-        builder.loadTrustMaterial(null, new TrustStrategy() {
-            @Override
-            public boolean isTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
-                return true;
-            }
-        });
-        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(builder.build(), new String[]{"SSLv2Hello", "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2"}, null, SSLConnectionSocketFactory.ALLOW_ALL_HOSTNAME_VERIFIER);
+        builder.loadTrustMaterial(null, (x509Certificates, s) -> true);
+        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
+                builder.build(),
+                new String[]{"SSLv2Hello", "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2"},
+                null, (hostname, session) -> true
+        );
         Registry<ConnectionSocketFactory> socketFactoryRegistry
                 = RegistryBuilder.<ConnectionSocketFactory>create().register("http",
                 PlainConnectionSocketFactory.INSTANCE).register("https",
@@ -98,9 +94,9 @@ public class HttpClientUtil {
 
         //支持TLSv1.2协议
         Registry<ConnectionSocketFactory> tlsRegistry
-                = RegistryBuilder.<ConnectionSocketFactory>create().register("http",
-                PlainConnectionSocketFactory.INSTANCE).register("https",
-                new SSLConnectionSocketFactory(createIgnoreVerifySSL())).build();
+                = RegistryBuilder.<ConnectionSocketFactory>create().register("http", PlainConnectionSocketFactory.INSTANCE)
+                .register("https", new SSLConnectionSocketFactory(createIgnoreVerifySSL()))
+                .build();
         PoolingHttpClientConnectionManager tlsCM = new PoolingHttpClientConnectionManager(tlsRegistry);
         tlsCM.setMaxTotal(maxTotal);
         tlsCM.setDefaultMaxPerRoute(defaultMaxPerRoute);
@@ -116,7 +112,7 @@ public class HttpClientUtil {
                     try {
                         init();
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        throw new RuntimeException(e);
                     }
                 }
             }
@@ -124,17 +120,26 @@ public class HttpClientUtil {
         return httpclient;
     }
 
+    public static CloseableHttpClient getTlsClient() {
+        if (tlsClient == null) {
+            synchronized (HttpClientUtil.class) {
+                if (tlsClient == null) {
+                    try {
+                        init();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }
+        return tlsClient;
+    }
+
     /**
      * 获取HttpGet
-     *
-     * @param url
-     * @param accept
-     * @param contentType
-     * @return HttpGet
-     * @throws IOException
      */
     public static HttpGet getHttpGet(String url, String accept, String contentType) throws IOException {
-        HttpGet httpGet = null;
+        HttpGet httpGet;
         httpGet = new HttpGet(url);
         if (accept != null) {
             httpGet.setHeader("Accept", accept);
@@ -148,10 +153,6 @@ public class HttpClientUtil {
 
     /**
      * 执行 HttpPost 请求
-     *
-     * @param httpPost
-     * @return
-     * @throws IOException
      */
     public static CloseableHttpResponse executeHttpPost(HttpPost httpPost) throws IOException {
         return httpclient.execute(httpPost);
@@ -159,10 +160,6 @@ public class HttpClientUtil {
 
     /**
      * 执行 HttpGet 请求
-     *
-     * @param httpGet
-     * @return
-     * @throws IOException
      */
     public static CloseableHttpResponse executeHttpGet(HttpGet httpGet) throws IOException {
         return httpclient.execute(httpGet);
@@ -170,11 +167,6 @@ public class HttpClientUtil {
 
     /**
      * CloseableHttpResponse 转字符串
-     *
-     * @param response
-     * @param charset
-     * @return String
-     * @throws IOException
      */
     public static String ObjectToString(CloseableHttpResponse response, String charset) throws IOException {
         try {
@@ -197,20 +189,16 @@ public class HttpClientUtil {
         // 实现一个X509TrustManager接口，用于绕过验证，不用修改里面的方法
         X509TrustManager trustManager = new X509TrustManager() {
             @Override
-            public void checkClientTrusted(
-                    X509Certificate[] paramArrayOfX509Certificate,
-                    String paramString) throws CertificateException {
+            public void checkClientTrusted(X509Certificate[] paramArrayOfX509Certificate, String paramString) {
             }
 
             @Override
-            public void checkServerTrusted(
-                    X509Certificate[] paramArrayOfX509Certificate,
-                    String paramString) throws CertificateException {
+            public void checkServerTrusted(X509Certificate[] paramArrayOfX509Certificate, String paramString) {
             }
 
             @Override
             public X509Certificate[] getAcceptedIssuers() {
-                return null;
+                return new X509Certificate[]{};
             }
         };
 
@@ -228,30 +216,8 @@ public class HttpClientUtil {
         }
     }
 
-    public CloseableHttpClient getTlsClient() {
-        if (tlsClient == null) {
-            synchronized (HttpClientUtil.class) {
-                if (tlsClient == null) {
-                    try {
-                        init();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-        return tlsClient;
-    }
-
     /**
      * 以byte数组获取HttpPost
-     *
-     * @param content
-     * @param url
-     * @param accept
-     * @param contentType
-     * @return HttpPost
-     * @throws IOException
      */
     public HttpPost getHttpPost(byte[] content, String url, String accept, String contentType) throws IOException {
         HttpPost httpPost = new HttpPost(url);
@@ -270,13 +236,6 @@ public class HttpClientUtil {
 
     /**
      * 以json获取HttpPost
-     *
-     * @param body
-     * @param url
-     * @param accept
-     * @param contentType
-     * @return HttpPost
-     * @throws IOException
      */
     public HttpPost getHttpPost(String body, String url, String accept, String contentType, String charset) throws IOException {
         HttpPost httpPost = new HttpPost(url);
@@ -295,13 +254,6 @@ public class HttpClientUtil {
 
     /**
      * 以map获取HttpPost
-     *
-     * @param params
-     * @param url
-     * @param accept
-     * @param contentType
-     * @return HttpPost
-     * @throws IOException
      */
     public HttpPost getHttpPost(Map<String, String> params, String url, String accept, String contentType, String charset) throws IOException {
         HttpPost httpPost = new HttpPost(url);
@@ -326,10 +278,6 @@ public class HttpClientUtil {
 
     /**
      * 执行 tlsHttpPost 请求
-     *
-     * @param httpPost
-     * @return
-     * @throws IOException
      */
     public CloseableHttpResponse executeTlsHttpPost(HttpPost httpPost) throws IOException {
         return tlsClient.execute(httpPost);
@@ -337,10 +285,6 @@ public class HttpClientUtil {
 
     /**
      * 执行 tlsHttpGet 请求
-     *
-     * @param httpGet
-     * @return
-     * @throws IOException
      */
     public CloseableHttpResponse executeTlsHttpGet(HttpGet httpGet) throws IOException {
         return tlsClient.execute(httpGet);
@@ -348,10 +292,6 @@ public class HttpClientUtil {
 
     /**
      * CloseableHttpResponse 转byte 数组
-     *
-     * @param response
-     * @return byte[]
-     * @throws IOException
      */
     public byte[] ObjectToByte(CloseableHttpResponse response) throws IOException {
         try {

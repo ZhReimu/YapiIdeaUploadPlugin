@@ -131,9 +131,9 @@ public class YapiSaveParam implements Serializable {
         saveParam.setYapiUrl(yapiUrl);
         saveParam.setDesc(dubbo.getDesc());
         saveParam.setStatus(dubbo.getStatus());
-        String paramMenu = dubbo.getMenu();
-        if (!Strings.isNullOrEmpty(paramMenu)) {
-            saveParam.setMenu(paramMenu);
+        String dubboMenu = dubbo.getMenu();
+        if (!Strings.isNullOrEmpty(dubboMenu)) {
+            saveParam.setMenu(dubboMenu);
         } else {
             saveParam.setMenu(YapiConstant.menu);
         }
@@ -158,6 +158,12 @@ public class YapiSaveParam implements Serializable {
         saveParam.setReq_body_type(api.getReq_body_type());
         saveParam.setReq_params(api.getReq_params());
         saveParam.setStatus(api.getStatus());
+        String apiMenu = api.getMenu();
+        if (!Strings.isNullOrEmpty(apiMenu)) {
+            saveParam.setMenu(apiMenu);
+        } else {
+            saveParam.setMenu(YapiConstant.menu);
+        }
         return saveParam;
     }
 
