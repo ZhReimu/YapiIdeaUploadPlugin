@@ -5,10 +5,11 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.qbb.dto.ConfigDTO;
-import lombok.Getter;
+import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -18,35 +19,40 @@ import java.util.List;
  * @version 1.0
  * @since 2020/12/25
  */
-@Getter
-@State(name = "yapiUploads", storages = {@Storage("yapiUploads.xml")})
-public class ConfigPersistence implements PersistentStateComponent<List<ConfigDTO>> {
+@State(name = "yapiUploads", storages = {@Storage("$APP_CONFIG$/yapiUploads.xml")})
+public class ConfigPersistence implements PersistentStateComponent<ConfigPersistence.ConfigState> {
 
-    private List<ConfigDTO> configs;
+    private final ConfigState state = new ConfigState();
 
-    private static final ConfigPersistence EMPTY = new ConfigPersistence();
+    public List<ConfigDTO> getConfigs() {
+        return state.configs;
+    }
+
+    @Data
+    public static class ConfigState {
+        private List<ConfigDTO> configs = new ArrayList<>();
+    }
 
     /**
      * 获取该持久化类的实例, 永不为空
      */
     @NotNull
     public static ConfigPersistence getInstance() {
-        ConfigPersistence service = ServiceManager.getService(ConfigPersistence.class);
-        return service == null ? EMPTY : service;
+        return ServiceManager.getService(ConfigPersistence.class);
     }
 
     public void setConfigs(List<ConfigDTO> configs) {
-        this.configs = configs;
-    }
-
-    @Nullable
-    @Override
-    public List<ConfigDTO> getState() {
-        return this.configs;
+        state.configs = configs;
     }
 
     @Override
-    public void loadState(@NotNull List<ConfigDTO> element) {
-        this.configs = element;
+    public @Nullable ConfigPersistence.ConfigState getState() {
+        return state;
     }
+
+    @Override
+    public void loadState(@NotNull ConfigState state) {
+        this.state.configs = state.configs;
+    }
+
 }

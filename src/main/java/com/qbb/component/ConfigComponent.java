@@ -74,7 +74,8 @@ public class ConfigComponent implements SearchableConfigurable {
     private void editAction(AnActionButton button) {
         int index = list.getSelectedIndex();
         final Project project = ProjectUtil.guessCurrentProject(list);
-        ItemAddEditDialog itemAddEditDialog = new ItemAddEditDialog(defaultModelList.get(index), project);
+        ConfigDTO beforeEdited = defaultModelList.get(index);
+        ItemAddEditDialog itemAddEditDialog = new ItemAddEditDialog(beforeEdited, project);
         if (!itemAddEditDialog.showAndGet()) {
             return;
         }
@@ -83,7 +84,8 @@ public class ConfigComponent implements SearchableConfigurable {
             Messages.showErrorDialog("编辑出错, 输入框内容不能为空!", "Error");
             return;
         }
-        boolean alreadyAdded = XUtils.stream(defaultModelList.elements()).anyMatch(it -> isAlreadyAdded(it, config));
+        boolean alreadyAdded = XUtils.stream(defaultModelList.elements()).filter(it -> it != beforeEdited)
+                .anyMatch(it -> isAlreadyAdded(it, config));
         if (alreadyAdded) {
             Messages.showErrorDialog("编辑出错, 已添加该模块配置!", "Error");
             return;
