@@ -2,10 +2,7 @@ package com.qbb.util;
 
 import com.google.common.base.Strings;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -56,37 +53,66 @@ public class DesUtil {
 
 
     /**
-     * 获得描述
+     * 从方法注释里获取接口描述
      *
      * @author chengsheng@qbb6.com
      * @since 2019/2/2
      */
     public static String getDescription(PsiMethod psiMethodTarget) {
-        if (psiMethodTarget.getDocComment() != null) {
-            PsiDocTag[] psiDocTags = psiMethodTarget.getDocComment().getTags();
-            for (PsiDocTag psiDocTag : psiDocTags) {
-                if (psiDocTag.getText().contains("@description") || psiDocTag.getText().contains("@Description")) {
-                    return trimFirstAndLastChar(psiDocTag.getText().replace("@description", "").replace("@Description", "").replace(":", "").replace("*", "").replace("\n", " "), ' ');
-                }
-            }
-            return trimFirstAndLastChar(psiMethodTarget.getDocComment().getText().split("@")[0].replace("@description", "").replace("@Description", "").replace(":", "").replace("*", "").replace("/", "").replace("\n", " "), ' ').trim();
+        if (psiMethodTarget.getDocComment() == null) {
+            return null;
         }
-        return null;
+        PsiDocTag[] psiDocTags = psiMethodTarget.getDocComment().getTags();
+        for (PsiDocTag psiDocTag : psiDocTags) {
+            String tagText = psiDocTag.getText();
+            if (tagText.contains("@description") || tagText.contains("@Description")) {
+                return trimFirstAndLastChar(
+                        tagText.replace("@description", "")
+                                .replace("@Description", "")
+                                .replace(":", "")
+                                .replace("*", "")
+                                .replace("\n", " "),
+                        ' '
+                );
+            }
+        }
+        return trimFirstAndLastChar(
+                psiMethodTarget.getDocComment().getText().split("@")[0]
+                        .replace("@description", "")
+                        .replace("@Description", "")
+                        .replace(":", "")
+                        .replace("*", "")
+                        .replace("/", "")
+                        .replace("\n", " ")
+                ,
+                ' '
+        ).trim();
     }
 
     /**
-     * 通过paramName 获得描述
+     * 通过 paramName 获得描述
      *
      * @author chengsheng@qbb6.com
      * @since 2019/5/22
      */
     public static String getParamDesc(PsiMethod psiMethodTarget, String paramName) {
-        if (psiMethodTarget.getDocComment() != null) {
-            PsiDocTag[] psiDocTags = psiMethodTarget.getDocComment().getTags();
-            for (PsiDocTag psiDocTag : psiDocTags) {
-                if ((psiDocTag.getText().contains("@param") || psiDocTag.getText().contains("@Param")) && (!psiDocTag.getText().contains("[")) && psiDocTag.getText().contains(paramName)) {
-                    return trimFirstAndLastChar(psiDocTag.getText().replace("@param", "").replace("@Param", "").replace(paramName, "").replace(":", "").replace("*", "").replace("\n", " "), ' ').trim();
-                }
+        if (psiMethodTarget.getDocComment() == null) {
+            return "";
+        }
+        PsiDocTag[] psiDocTags = psiMethodTarget.getDocComment().getTags();
+        for (PsiDocTag psiDocTag : psiDocTags) {
+            String tagText = psiDocTag.getText();
+            boolean containsParamTag = tagText.contains("@param") || tagText.contains("@Param");
+            if (containsParamTag && (!tagText.contains("[")) && tagText.contains(paramName)) {
+                return trimFirstAndLastChar(
+                        tagText.replace("@param", "")
+                                .replace("@Param", "")
+                                .replace(paramName, "")
+                                .replace(":", "")
+                                .replace("*", "")
+                                .replace("\n", " ")
+                        , ' '
+                ).trim();
             }
         }
         return "";
@@ -102,7 +128,14 @@ public class DesUtil {
         if (Objects.nonNull(psiDocComment)) {
             String fileText = psiDocComment.getText();
             if (!Strings.isNullOrEmpty(fileText)) {
-                return trimFirstAndLastChar(fileText.replace("*", "").replace("/", "").replace(" ", "").replace("\n", ",").replace("\t", ""), ',').split("\\{@link")[0];
+                return trimFirstAndLastChar(
+                        fileText.replace("*", "")
+                                .replace("/", "")
+                                .replace(" ", "")
+                                .replace("\n", ",")
+                                .replace("\t", "")
+                        , ','
+                ).split("\\{@link")[0];
             }
         }
         return "";
@@ -114,14 +147,24 @@ public class DesUtil {
      * @author chengsheng@qbb6.com
      * @since 2019/5/18
      */
-    public static String getUrlReFerenceRDesc(String text) {
+    public static String getUrlReferenceRDesc(String text) {
         if (Strings.isNullOrEmpty(text)) {
             return text;
         }
         if (!text.contains("*/")) {
             return null;
         }
-        return DesUtil.trimFirstAndLastChar(text.split("\\*/")[0].replace("@description", "").replace("@Description", "").split("@")[0].replace(":", "").replace("*", "").replace("/", "").replace("\n", " "), ' ');
+        return trimFirstAndLastChar(
+                text.split("\\*/")[0]
+                        .replace("@description", "")
+                        .replace("@Description", "")
+                        .split("@")[0]
+                        .replace(":", "")
+                        .replace("*", "")
+                        .replace("/", "")
+                        .replace("\n", " ")
+                , ' '
+        );
     }
 
     /**
@@ -136,7 +179,14 @@ public class DesUtil {
         }
         String[] menuList = text.split("\\*/")[0].split("@menu");
         if (menuList.length > 1) {
-            return trimFirstAndLastChar(menuList[1].split("\\*")[0].replace("*", "").replace(":", "").replace("\n", " ").replace(" ", ""), ' ').trim();
+            return trimFirstAndLastChar(
+                    menuList[1].split("\\*")[0]
+                            .replace("*", "")
+                            .replace(":", "")
+                            .replace("\n", " ")
+                            .replace(" ", "")
+                    , ' '
+            ).trim();
         } else {
             return null;
         }
@@ -151,7 +201,14 @@ public class DesUtil {
         }
         String[] menuList = text.split("\\*/")[0].split("@path");
         if (menuList.length > 1) {
-            return DesUtil.trimFirstAndLastChar(menuList[1].split("\\*")[0].replace("*", "").replace(":", "").replace("\n", " ").replace(" ", ""), ' ').trim();
+            return trimFirstAndLastChar(
+                    menuList[1].split("\\*")[0]
+                            .replace("*", "")
+                            .replace(":", "")
+                            .replace("\n", " ")
+                            .replace(" ", "")
+                    , ' '
+            ).trim();
         } else {
             return null;
         }
@@ -169,7 +226,16 @@ public class DesUtil {
         }
         String[] menuList = text.split("\\*/")[0].split("@status");
         if (menuList.length > 1) {
-            return YapiStatusEnum.getStatus(DesUtil.trimFirstAndLastChar(menuList[1].split("\\*")[0].replace("*", "").replace(":", "").replace("\n", " ").replace(" ", ""), ' ').trim());
+            return YapiStatusEnum.getStatus(
+                    trimFirstAndLastChar(
+                            menuList[1].split("\\*")[0]
+                                    .replace("*", "")
+                                    .replace(":", "")
+                                    .replace("\n", " ")
+                                    .replace(" ", ""),
+                            ' '
+                    ).trim()
+            );
         } else {
             return null;
         }
@@ -188,12 +254,13 @@ public class DesUtil {
         }
         String[] linkString = field.getDocComment().getText().split("@link");
         if (linkString.length > 1) {
-            //说明有link
+            // 说明有 link
             String linkAddress = linkString[1].split("}")[0].trim();
             PsiClass psiClassLink = JavaPsiFacade.getInstance(project).findClass(linkAddress, GlobalSearchScope.allScope(project));
             if (Objects.isNull(psiClassLink)) {
-                //可能没有获得全路径，尝试获得全路径
-                String[] importPaths = field.getParent().getContext().getText().split("import");
+                // 可能没有获得全路径，尝试获得全路径
+                PsiElement context = Objects.requireNonNull(field.getParent().getContext());
+                String[] importPaths = context.getText().split("import");
                 if (importPaths.length > 1) {
                     for (String importPath : importPaths) {
                         importPath = importPath.split(";")[0];
@@ -206,7 +273,7 @@ public class DesUtil {
                 }
                 if (Objects.isNull(psiClassLink)) {
                     //如果是同包情况
-                    linkAddress = ((PsiJavaFileImpl) field.getParent().getContext()).getPackageName() + "." + linkAddress;
+                    linkAddress = ((PsiJavaFileImpl) context).getPackageName() + "." + linkAddress;
                     psiClassLink = JavaPsiFacade.getInstance(project).findClass(linkAddress, GlobalSearchScope.allScope(project));
                 }
                 //如果小于等于一为不存在import，不做处理
@@ -216,24 +283,26 @@ public class DesUtil {
                 PsiField[] linkFields = psiClassLink.getFields();
                 if (linkFields.length > 0) {
                     remark += "," + psiClassLink.getName() + "[";
+                    StringBuilder remarkBuilder = new StringBuilder(remark);
                     for (int i = 0; i < linkFields.length; i++) {
                         PsiField psiField = linkFields[i];
                         if (i > 0) {
-                            remark += ",";
+                            remarkBuilder.append(",");
                         }
                         // 先获得名称
-                        remark += psiField.getName();
+                        remarkBuilder.append(psiField.getName());
                         // 后获得value,通过= 来截取获得，第二个值，再截取;
                         String[] splitValue = psiField.getText().split("=");
                         if (splitValue.length > 1) {
                             String value = splitValue[1].split(";")[0];
-                            remark += ":" + value;
+                            remarkBuilder.append(":").append(value);
                         }
                         String filedValue = DesUtil.getFiledDesc(psiField.getDocComment());
                         if (!Strings.isNullOrEmpty(filedValue)) {
-                            remark += "(" + filedValue + ")";
+                            remarkBuilder.append("(").append(filedValue).append(")");
                         }
                     }
+                    remark = remarkBuilder.toString();
                     remark += "]";
                 }
             }
@@ -260,7 +329,8 @@ public class DesUtil {
                 PsiClass psiClassLink = JavaPsiFacade.getInstance(project).findClass(linkAddress, GlobalSearchScope.allScope(project));
                 if (Objects.isNull(psiClassLink)) {
                     //可能没有获得全路径，尝试获得全路径
-                    String[] importPaths = field.getParent().getContext().getText().split("import");
+                    PsiElement context = Objects.requireNonNull(field.getParent().getContext());
+                    String[] importPaths = context.getText().split("import");
                     if (importPaths.length > 1) {
                         for (String importPath : importPaths) {
                             importPath = importPath.split(";")[0];
@@ -276,7 +346,7 @@ public class DesUtil {
                     }
                     if (Objects.isNull(psiClassLink)) {
                         //如果是同包情况
-                        linkAddress = ((PsiJavaFileImpl) field.getParent().getContext()).getPackageName() + "." + linkAddress;
+                        linkAddress = ((PsiJavaFileImpl) context).getPackageName() + "." + linkAddress;
                         psiClassLink = JavaPsiFacade.getInstance(project).findClass(linkAddress, GlobalSearchScope.allScope(project));
                         if (Objects.nonNull(psiClassLink)) {
                             result.add(psiClassLink);

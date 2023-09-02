@@ -241,7 +241,7 @@ public class BuildJsonForYapi {
                     }
                     String[] results = resolve.getText().split("=");
                     DesUtil.addPath(path, results[results.length - 1].split(";")[0].replace("\"", "").trim());
-                    yapiApiDTO.setTitle(DesUtil.getUrlReFerenceRDesc(resolve.getText()));
+                    yapiApiDTO.setTitle(DesUtil.getUrlReferenceRDesc(resolve.getText()));
                     if (StringUtils.isBlank(yapiApiDTO.getMenu())) {
                         yapiApiDTO.setMenu(DesUtil.getMenu(resolve.getText()));
                     }
@@ -277,7 +277,7 @@ public class BuildJsonForYapi {
                     }
                     String[] results = resolve.getText().split("=");
                     DesUtil.addPath(path, results[results.length - 1].split(";")[0].replace("\"", "").trim());
-                    yapiApiDTO.setTitle(DesUtil.getUrlReFerenceRDesc(resolve.getText()));
+                    yapiApiDTO.setTitle(DesUtil.getUrlReferenceRDesc(resolve.getText()));
                     if (StringUtils.isBlank(yapiApiDTO.getMenu())) {
                         yapiApiDTO.setMenu(DesUtil.getMenu(resolve.getText()));
                     }
