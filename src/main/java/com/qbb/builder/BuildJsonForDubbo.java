@@ -31,7 +31,7 @@ public class BuildJsonForDubbo {
         notificationGroup = new NotificationGroup("Java2Json.NotificationGroup", NotificationDisplayType.BALLOON, true);
     }
 
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     /**
      * 获得对象属性
@@ -41,7 +41,8 @@ public class BuildJsonForDubbo {
         if (psiClass != null) {
             String pName = psiClass.getName();
             for (PsiField field : psiClass.getAllFields()) {
-                if (field.getModifierList().hasModifierProperty("final")) {
+                PsiModifierList modifierList = field.getModifierList();
+                if (modifierList == null || modifierList.hasModifierProperty(PsiModifier.FINAL)) {
                     continue;
                 }
                 PsiType type = field.getType();
@@ -60,7 +61,7 @@ public class BuildJsonForDubbo {
                     } else if (type instanceof PsiArrayType) {
                         //array type
                         PsiType deepType = type.getDeepComponentType();
-                        ArrayList list = new ArrayList<>();
+                        List<Object> list = new ArrayList<>();
                         String deepTypeName = deepType.getPresentableText();
                         if (deepType instanceof PsiPrimitiveType) {
                             list.add(PsiTypesUtil.getDefaultValueOfType(deepType));
@@ -133,13 +134,12 @@ public class BuildJsonForDubbo {
     }
 
     /**
-     * @description: 批量生成接口数据
-     * @param: [e]
-     * @return: java.util.ArrayList<com.qbb.dto.YapiDubboDTO>
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/2/19
+     * 批量生成接口数据
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/2/19
      */
-    public ArrayList<YapiDubboDTO> actionPerformedList(AnActionEvent e) {
+    public static ArrayList<YapiDubboDTO> actionPerformedList(AnActionEvent e) {
         Editor editor = e.getDataContext().getData(CommonDataKeys.EDITOR);
         PsiFile psiFile = e.getDataContext().getData(CommonDataKeys.PSI_FILE);
         String selectedText = e.getRequiredData(CommonDataKeys.EDITOR).getSelectionModel().getSelectedText();
@@ -160,7 +160,7 @@ public class BuildJsonForDubbo {
             PsiMethod[] psiMethods = selectedClass.getMethods();
             for (PsiMethod psiMethodTarget : psiMethods) {
                 //去除私有方法
-                if (!psiMethodTarget.getModifierList().hasModifierProperty("private")) {
+                if (!psiMethodTarget.getModifierList().hasModifierProperty(PsiModifier.PRIVATE)) {
                     YapiDubboDTO yapiDubboDTO = actionPerformed(selectedClass, psiMethodTarget, project, psiFile);
                     if (Objects.nonNull(psiMethodTarget.getDocComment())) {
                         yapiDubboDTO.setMenu(DesUtil.getMenu(psiMethodTarget.getDocComment().getText()));
@@ -196,7 +196,7 @@ public class BuildJsonForDubbo {
 
     }
 
-    public YapiDubboDTO actionPerformed(PsiClass selectedClass, PsiMethod psiMethodTarget, Project project, PsiFile psiFile) {
+    public static YapiDubboDTO actionPerformed(PsiClass selectedClass, PsiMethod psiMethodTarget, Project project, PsiFile psiFile) {
         YapiDubboDTO yapiDubboDTO = new YapiDubboDTO();
         ArrayList list = new ArrayList<KV>();
         //判断是否有匹配的目标方法

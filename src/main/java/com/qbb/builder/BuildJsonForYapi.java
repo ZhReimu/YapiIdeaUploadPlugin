@@ -1057,7 +1057,7 @@ public class BuildJsonForYapi {
     /**
      * 批量生成 接口数据
      */
-    public List<YapiApiDTO> actionPerformedList(AnActionEvent e, String attachUpload, String returnClass) {
+    public static List<YapiApiDTO> actionPerformedList(AnActionEvent e, String attachUpload, String returnClass) {
         Editor editor = e.getDataContext().getData(CommonDataKeys.EDITOR);
         PsiFile psiFile = e.getDataContext().getData(CommonDataKeys.PSI_FILE);
         if (editor == null || psiFile == null) {

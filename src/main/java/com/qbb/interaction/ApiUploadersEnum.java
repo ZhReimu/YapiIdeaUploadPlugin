@@ -44,7 +44,7 @@ public enum ApiUploadersEnum {
 
     private static String uploadForDubbo(AnActionEvent event, ConfigDTO config) {
         // 获得dubbo需上传的接口列表 参数对象
-        List<YapiDubboDTO> yapiDubboDTOs = new BuildJsonForDubbo().actionPerformedList(event);
+        List<YapiDubboDTO> yapiDubboDTOs = BuildJsonForDubbo.actionPerformedList(event);
         String yapiUrl = config.getYapiUrl();
         String projectToken = config.getProjectToken();
         String projectId = config.getProjectId();
@@ -62,7 +62,7 @@ public enum ApiUploadersEnum {
         String projectToken = config.getProjectToken();
         String projectId = config.getProjectId();
         //获得api 需上传的接口列表 参数对象
-        List<YapiApiDTO> yapiApiDTOS = new BuildJsonForYapi().actionPerformedList(event, null, null);
+        List<YapiApiDTO> yapiApiDTOS = BuildJsonForYapi.actionPerformedList(event, null, null);
         if (yapiApiDTOS != null) {
             for (YapiApiDTO yapiApiDTO : yapiApiDTOS) {
                 YapiSaveParam yapiSaveParam = YapiSaveParam.ofApi(yapiApiDTO, projectToken, projectId, yapiUrl);
