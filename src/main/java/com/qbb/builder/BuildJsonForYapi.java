@@ -22,11 +22,7 @@ import com.qbb.dto.YapiApiDTO;
 import com.qbb.dto.YapiHeaderDTO;
 import com.qbb.dto.YapiPathVariableDTO;
 import com.qbb.dto.YapiQueryDTO;
-import com.qbb.upload.UploadYapi;
-import com.qbb.util.DesUtil;
-import com.qbb.util.FileToZipUtil;
-import com.qbb.util.FileUnZipUtil;
-import com.qbb.util.PsiAnnotationSearchUtil;
+import com.qbb.util.*;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
@@ -223,7 +219,7 @@ public class BuildJsonForYapi {
                 if (codeSet.size() > 0) {
                     FileToZipUtil.toZip(codeSet, project.getBasePath() + codeFileName, true);
                     if (!Strings.isNullOrEmpty(attachUpload)) {
-                        String fileUrl = UploadYapi.uploadFile(attachUpload, project.getBasePath() + codeFileName);
+                        String fileUrl = XUtils.uploadFile(attachUpload, project.getBasePath() + codeFileName);
                         if (!Strings.isNullOrEmpty(fileUrl)) {
                             yapiApiDTO.setDesc("java类:<a href='" + fileUrl + "'>下载地址</a><br/>" + yapiApiDTO.getDesc());
                         }

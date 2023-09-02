@@ -5,15 +5,8 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.qbb.constant.YapiConstant;
 import com.qbb.dto.*;
-import com.qbb.util.HttpClientUtil;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.FileBody;
+import com.qbb.util.XUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +52,9 @@ public class UploadYapi {
         // changeDesByPath(yapiSaveParam);
         YapiResponse<?> yapiResponse = getCatIdOrCreate(yapiSaveParam);
         if (yapiResponse.getErrcode() == 0) {
-            String response = HttpClientUtil.ObjectToString(HttpClientUtil.getHttpclient().execute(getHttpPost(yapiSaveParam.getYapiUrl() + YapiConstant.yapiSave, gson.toJson(yapiSaveParam))), "utf-8");
+            String url = yapiSaveParam.getYapiUrl() + YapiConstant.yapiSave;
+            String body = gson.toJson(yapiSaveParam);
+            String response = XUtils.doPost(url, body);
             YapiResponse<?> yapiResponseResult = gson.fromJson(response, YapiResponse.class);
             yapiResponseResult.setCatId(yapiSaveParam.getCatid());
             return yapiResponseResult;
@@ -69,56 +64,14 @@ public class UploadYapi {
     }
 
     /**
-     * 获得 httpPost
-     */
-    private static HttpPost getHttpPost(String url, String body) {
-        HttpPost httpPost = null;
-        try {
-            httpPost = new HttpPost(url);
-            httpPost.setHeader("Content-type", "application/json;charset=utf-8");
-            HttpEntity reqEntity = new StringEntity(body == null ? "" : body, "UTF-8");
-            httpPost.setEntity(reqEntity);
-        } catch (Exception ignored) {
-        }
-        return httpPost;
-    }
-
-    /**
-     * 上传文件
-     *
-     * @author chengsheng@qbb6.com
-     * @since 2019/5/15
-     */
-    public static String uploadFile(String url, String filePath) {
-        HttpPost httpPost;
-        try {
-            httpPost = new HttpPost(url);
-            FileBody bin = new FileBody(new File(filePath));
-            HttpEntity reqEntity = MultipartEntityBuilder.create().addPart("file", bin).build();
-            httpPost.setEntity(reqEntity);
-            return HttpClientUtil.ObjectToString(HttpClientUtil.getHttpclient().execute(httpPost), "utf-8");
-        } catch (Exception ignored) {
-        }
-        return "";
-    }
-
-    private static HttpGet getHttpGet(String url) {
-        try {
-            return HttpClientUtil.getHttpGet(url, "application/json", "application/json; charset=utf-8");
-        } catch (IOException ignored) {
-        }
-        return null;
-    }
-
-    /**
      * 获得描述
      *
      * @author chengsheng@qbb6.com
      * @since 2019/7/28
      */
     public static void changeDesByPath(YapiSaveParam yapiSaveParam) throws IOException {
-        HttpGet httpGet = getHttpGet(yapiSaveParam.getYapiUrl() + YapiConstant.yapiGetByPath + "?token=" + yapiSaveParam.getToken() + "&path=" + yapiSaveParam.getPath());
-        String response = HttpClientUtil.ObjectToString(HttpClientUtil.getHttpclient().execute(httpGet), "utf-8");
+        String url = yapiSaveParam.getYapiUrl() + YapiConstant.yapiGetByPath + "?token=" + yapiSaveParam.getToken() + "&path=" + yapiSaveParam.getPath();
+        String response = XUtils.doGet(url);
         YapiResponse<?> yapiResponse = gson.fromJson(response, YapiResponse.class);
         if (yapiResponse.getErrcode() == 0) {
             YapiInterfaceResponse yapiInterfaceResponse = gson.fromJson(gson.toJson(yapiResponse.getData()), YapiInterfaceResponse.class);
@@ -147,11 +100,10 @@ public class UploadYapi {
         if (Strings.isNullOrEmpty(yapiSaveParam.getMenu())) {
             yapiSaveParam.setMenu(YapiConstant.menu);
         }
-        String response;
         try {
             String url = yapiSaveParam.getYapiUrl() + YapiConstant.yapiCatMenu + "?project_id="
                     + yapiSaveParam.getProjectId() + "&token=" + yapiSaveParam.getToken();
-            response = HttpClientUtil.ObjectToString(HttpClientUtil.getTlsClient().execute(getHttpGet(url)), "utf-8");
+            String response = XUtils.doGet(url);
             YapiResponse<List<YapiCatResponse>> yapiResponse = gson.fromJson(response, new TypeToken<List<YapiCatResponse>>() {
             }.getType());
             if (yapiResponse.getErrcode() == 0) {
@@ -196,7 +148,6 @@ public class UploadYapi {
         }
     }
 
-
     /**
      * 新增菜单
      *
@@ -205,7 +156,9 @@ public class UploadYapi {
      */
     private static Integer addMenu(YapiSaveParam yapiSaveParam, Integer parent_id, String menu) throws IOException {
         YapiCatMenuParam yapiCatMenuParam = new YapiCatMenuParam(menu, yapiSaveParam.getProjectId(), yapiSaveParam.getToken(), parent_id);
-        String responseCat = HttpClientUtil.ObjectToString(HttpClientUtil.getHttpclient().execute(getHttpPost(yapiSaveParam.getYapiUrl() + YapiConstant.yapiAddCat, gson.toJson(yapiCatMenuParam))), "utf-8");
+        String url = yapiSaveParam.getYapiUrl() + YapiConstant.yapiAddCat;
+        String body = gson.toJson(yapiCatMenuParam);
+        String responseCat = XUtils.doPost(url, body);
         YapiCatResponse yapiCatResponse = gson.fromJson(gson.fromJson(responseCat, YapiResponse.class).getData().toString(), YapiCatResponse.class);
         return yapiCatResponse.get_id();
     }
