@@ -30,6 +30,9 @@ public class NormalTypes {
      */
     public static final List<String> genericList = new ArrayList<>();
 
+    public static final String TYPE_OBJECT = "object";
+    public static final String TYPE_ARRAY = "array";
+
     static {
         normalTypes.put("int", "1");
         normalTypes.put("boolean", "false");

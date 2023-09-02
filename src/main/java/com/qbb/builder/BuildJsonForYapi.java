@@ -16,6 +16,8 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.qbb.builder.payload.FieldPayload;
+import com.qbb.builder.payload.ResponsePayload;
 import com.qbb.constant.*;
 import com.qbb.dto.YapiApiDTO;
 import com.qbb.dto.YapiHeaderDTO;
@@ -31,6 +33,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
+
+import static com.qbb.builder.NormalTypes.TYPE_ARRAY;
+import static com.qbb.builder.NormalTypes.TYPE_OBJECT;
 
 /**
  * 构造用以生成 yapi 文档的 json 数据
@@ -664,7 +669,7 @@ public class BuildJsonForYapi {
             KV<String, Object> kvClass = KV.create();
             kvClass.set(psiType.getCanonicalText(), NormalTypes.getNormalType(typeName));
         } else if (typeName.startsWith("List")) {
-            return getKvForList(project, psiType, typeName);
+            return getFieldPayloadForList(project, psiType, typeName);
         } else if (typeName.startsWith("Set")) {
             return getKvForSet(project, psiType, typeName);
         } else if (typeName.startsWith("Map") || typeName.startsWith("HashMap") || typeName.startsWith("LinkedHashMap")) {
@@ -691,10 +696,7 @@ public class BuildJsonForYapi {
             result.set("type", "object");
             result.set("title", typeName);
             result.set("required", requiredList);
-            addFilePaths(filePaths, psiClassChild);
-            if (Objects.nonNull(psiClassChild.getSuperClass()) && !psiClassChild.getSuperClass().getName().equals("Object")) {
-                addFilePaths(filePaths, psiClassChild.getSuperClass());
-            }
+            processSourceFiles(psiClassChild);
             result.set("description", (typeName + " :" + psiClassChild.getName()).trim());
             result.set("properties", kvObject);
             return result;
@@ -703,10 +705,7 @@ public class BuildJsonForYapi {
         List<String> requiredList = new ArrayList<>();
         PsiClass psiClassChild = JavaPsiFacade.getInstance(project).findClass(psiType.getCanonicalText(), GlobalSearchScope.allScope(project));
         KV<String, Object> kvObject = getFields(psiClassChild, project, null, null, requiredList, new HashSet<>());
-        addFilePaths(filePaths, psiClassChild);
-        if (Objects.nonNull(psiClassChild.getSuperClass()) && !psiClassChild.getSuperClass().getName().equals("Object")) {
-            addFilePaths(filePaths, psiClassChild.getSuperClass());
-        }
+        processSourceFiles(psiClassChild);
         result.set("type", "object");
         result.set("required", requiredList);
         result.set("title", typeName);
@@ -757,10 +756,7 @@ public class BuildJsonForYapi {
                 List<String> requiredList = new ArrayList<>();
                 KV<String, Object> kvObject = getFields(psiClassChild, project, null, null, requiredList, new HashSet<>());
                 listKv.set("type", "object");
-                addFilePaths(filePaths, psiClassChild);
-                if (Objects.nonNull(psiClassChild.getSuperClass()) && !psiClassChild.getSuperClass().getName().equals("Object")) {
-                    addFilePaths(filePaths, psiClassChild.getSuperClass());
-                }
+                processSourceFiles(psiClassChild);
                 listKv.set("properties", kvObject);
                 listKv.set("required", requiredList);
             }
@@ -774,36 +770,40 @@ public class BuildJsonForYapi {
     }
 
     @NotNull
-    private static KV<String, Object> getKvForList(Project project, PsiType psiType, String typeName) {
+    private static KV<String, Object> getFieldPayloadForList(Project project, PsiType psiType, String typeName) {
         String[] types = psiType.getCanonicalText().split("<");
-        KV<String, Object> listKv = new KV<>();
+        FieldPayload fieldPayload = new FieldPayload();
         if (types.length > 1) {
             String childPackage = types[1].split(">")[0];
             if (NormalTypes.isNormalType(childPackage)) {
                 String[] childTypes = childPackage.split("\\.");
-                listKv.set("type", NormalTypes.java2JsonType(childTypes[childTypes.length - 1]));
+                fieldPayload.setType(NormalTypes.java2JsonType(childTypes[childTypes.length - 1]));
             } else if (NormalTypes.isCollectionType(childPackage)) {
                 String[] childTypes = childPackage.split("\\.");
-                listKv.set("type", childTypes[childTypes.length - 1]);
+                fieldPayload.setType(childTypes[childTypes.length - 1]);
             } else {
                 PsiClass psiClassChild = JavaPsiFacade.getInstance(project).findClass(childPackage, GlobalSearchScope.allScope(project));
                 List<String> requiredList = new ArrayList<>();
                 KV<String, Object> kvObject = getFields(psiClassChild, project, null, null, requiredList, new HashSet<>());
-                listKv.set("type", "object");
-                addFilePaths(filePaths, psiClassChild);
-                if (Objects.nonNull(psiClassChild.getSuperClass()) && !psiClassChild.getSuperClass().getName().equals("Object")) {
-                    addFilePaths(filePaths, psiClassChild.getSuperClass());
-                }
-                listKv.set("properties", kvObject);
-                listKv.set("required", requiredList);
+                fieldPayload.setType(TYPE_OBJECT);
+                processSourceFiles(psiClassChild);
+                fieldPayload.setProperties(kvObject);
+                fieldPayload.setRequired(requiredList);
             }
         }
-        KV<String, Object> result = new KV<>();
-        result.set("type", "array");
-        result.set("title", typeName);
-        result.set("description", typeName);
-        result.set("items", listKv);
-        return result;
+        ResponsePayload payload = new ResponsePayload();
+        payload.setType(TYPE_ARRAY);
+        payload.setTitle(typeName);
+        payload.setDescription(typeName);
+        payload.setItems(fieldPayload);
+        return payload.toKV();
+    }
+
+    private static void processSourceFiles(PsiClass psiClassChild) {
+        addFilePaths(filePaths, psiClassChild);
+        if (Objects.nonNull(psiClassChild.getSuperClass()) && !psiClassChild.getSuperClass().getName().equals("Object")) {
+            addFilePaths(filePaths, psiClassChild.getSuperClass());
+        }
     }
 
     /**
