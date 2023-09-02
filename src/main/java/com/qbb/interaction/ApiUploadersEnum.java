@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 /**
@@ -19,33 +20,23 @@ import java.util.stream.Collectors;
  */
 public enum ApiUploadersEnum {
 
-    DUBBO(ProjectTypeConstant.dubbo) {
-        @Nullable
-        @Override
-        public String uploadToYapi(AnActionEvent event, ConfigDTO config) {
-            String url = uploadForDubbo(event, config);
-            Messages.showInfoMessage("上传成功, 接口文档 url 地址:  " + url, "上传成功！");
-            return url;
-        }
-    },
-    API(ProjectTypeConstant.api) {
-        @Nullable
-        @Override
-        public String uploadToYapi(AnActionEvent event, ConfigDTO config) {
-            String url = uploadForApi(event, config);
-            Messages.showInfoMessage("上传成功, 接口文档 url 地址:  " + url, "上传成功！");
-            return url;
-        }
-    };
+    DUBBO(ProjectTypeConstant.dubbo, ApiUploadersEnum::uploadForDubbo),
+    API(ProjectTypeConstant.api, ApiUploadersEnum::uploadForApi);
     private final String type;
+    private final BiFunction<AnActionEvent, ConfigDTO, String> uploadFunction;
     private static final Set<ApiUploadersEnum> handlers = EnumSet.allOf(ApiUploadersEnum.class);
 
-    ApiUploadersEnum(String type) {
+    ApiUploadersEnum(String type, BiFunction<AnActionEvent, ConfigDTO, String> uploadFunction) {
         this.type = type;
+        this.uploadFunction = uploadFunction;
     }
 
     @Nullable
-    public abstract String uploadToYapi(AnActionEvent event, ConfigDTO config);
+    public String uploadToYapi(AnActionEvent event, ConfigDTO config) {
+        String url = uploadFunction.apply(event, config);
+        Messages.showInfoMessage("上传成功, 接口文档 url 地址:  " + url, "上传成功！");
+        return url;
+    }
 
     public static ApiUploadersEnum ofType(String type) {
         return handlers.stream().filter(it -> it.type.equals(type)).findFirst().orElseThrow(IllegalArgumentException::new);
