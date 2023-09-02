@@ -37,20 +37,19 @@ public class UploadToYapi extends AnAction {
             return;
         }
         // 获取配置
-        final List<ConfigDTO> configs = ServiceManager.getService(ConfigPersistence.class).getConfigs();
+        List<ConfigDTO> configs = ServiceManager.getService(ConfigPersistence.class).getConfigs();
         if (configs == null || configs.isEmpty()) {
             Messages.showErrorDialog("请先去配置界面配置yapi配置", "获取配置失败！");
             return;
         }
-        final List<ConfigDTO> collect = configs.stream().filter(it -> filterModule(it, project, psiFile)).collect(Collectors.toList());
+        List<ConfigDTO> collect = configs.stream().filter(it -> filterModule(it, project, psiFile)).collect(Collectors.toList());
         if (collect.isEmpty()) {
             Messages.showErrorDialog("没有找到对应的yapi配置，请在菜单 > Preferences > Other setting > YapiUpload 添加", "Error");
             return;
         }
-        final ConfigDTO configDTO = collect.get(0);
-        String projectType = configDTO.getProjectType();
-        // 判断项目类型
-        String url = ApiUplooadStrategyEnum.ofType(projectType).uploadToYapi(event, configDTO);
+        ConfigDTO config = collect.get(0);
+        // 判断项目类型并执行上传操作
+        String url = ApiUplooadStrategyEnum.ofType(config.getProjectType()).uploadToYapi(event, config);
         setClipboard(url);
     }
 

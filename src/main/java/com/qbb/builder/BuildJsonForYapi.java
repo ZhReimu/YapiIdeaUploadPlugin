@@ -47,7 +47,59 @@ public class BuildJsonForYapi {
         notificationGroup = new NotificationGroup("BuildJson.NotificationGroup", NotificationDisplayType.BALLOON, true);
     }
 
-    public static YapiApiDTO actionPerformed(PsiClass targetClass, PsiMethod targetMethod, Project project, String attachUpload, String returnClass) {
+    /**
+     * 批量生成 接口数据
+     */
+    @NotNull
+    @SuppressWarnings("DialogTitleCapitalization")
+    public static List<YapiApiDTO> actionPerformedList(AnActionEvent event, String attachUpload, String returnClass) {
+        Editor editor = event.getDataContext().getData(CommonDataKeys.EDITOR);
+        PsiFile psiFile = event.getDataContext().getData(CommonDataKeys.PSI_FILE);
+        if (editor == null || psiFile == null) {
+            return Collections.emptyList();
+        }
+        String selectedText = event.getRequiredData(CommonDataKeys.EDITOR).getSelectionModel().getSelectedText();
+        Project project = editor.getProject();
+        PsiElement referenceAt = psiFile.findElementAt(editor.getCaretModel().getOffset());
+        PsiClass selectedClass = PsiTreeUtil.getContextOfType(referenceAt, PsiClass.class);
+        if (selectedClass == null) {
+            Messages.showErrorDialog("请使用光标选中一个类", "错误");
+            return Collections.emptyList();
+        }
+        String classMenu = getClassMenu(selectedClass);
+        if (Strings.isNullOrEmpty(selectedText) || selectedText.equals(selectedClass.getName())) {
+            // 获取类下所有方法, 去除私有方法
+            List<YapiApiDTO> yapiApiDTOList = Arrays.stream(selectedClass.getMethods())
+                    .filter(it -> !it.getModifierList().hasModifierProperty(PsiModifier.PRIVATE) && it.getReturnType() != null)
+                    .map(it -> actionPerformed(selectedClass, it, project, attachUpload, returnClass))
+                    .filter(Objects::nonNull).collect(Collectors.toList());
+            for (YapiApiDTO yapiApi : yapiApiDTOList) {
+                if (yapiApi.getMenu() == null) {
+                    yapiApi.setMenu(classMenu);
+                }
+            }
+            return yapiApiDTOList;
+        } else {
+            // 寻找目标方法
+            List<YapiApiDTO> yapiApiDTOList = Arrays.stream(selectedClass.getAllMethods())
+                    .filter(it -> it.getName().equals(selectedText))
+                    .map(it -> actionPerformed(selectedClass, it, project, attachUpload, returnClass))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            if (yapiApiDTOList.isEmpty()) {
+                Notification error = notificationGroup.createNotification("can not find method:" + selectedText, NotificationType.ERROR);
+                Notifications.Bus.notify(error, project);
+                return Collections.emptyList();
+            }
+            YapiApiDTO yapiApiDTO = yapiApiDTOList.get(0);
+            if (yapiApiDTO.getMenu() == null) {
+                yapiApiDTO.setMenu(classMenu);
+            }
+            return yapiApiDTOList;
+        }
+    }
+
+    private static YapiApiDTO actionPerformed(PsiClass targetClass, PsiMethod targetMethod, Project project, String attachUpload, String returnClass) {
         YapiApiDTO yapiApiDTO = new YapiApiDTO();
         // 获得路径
         StringBuilder path = new StringBuilder();
@@ -336,7 +388,7 @@ public class BuildJsonForYapi {
      * @author chengsheng@qbb6.com
      * @since 2019/2/19
      */
-    public static void getRequest(Project project, YapiApiDTO yapiApiDTO, PsiMethod psiMethodTarget) throws RuntimeException {
+    private static void getRequest(Project project, YapiApiDTO yapiApiDTO, PsiMethod psiMethodTarget) throws RuntimeException {
         PsiParameter[] psiParameters = psiMethodTarget.getParameterList().getParameters();
         if (psiParameters.length > 0) {
             List<YapiQueryDTO> yapiParamList = new ArrayList<>();
@@ -531,7 +583,7 @@ public class BuildJsonForYapi {
      * @author chengsheng@qbb6.com
      * @since 2019/5/17
      */
-    public static List<Map<String, String>> getRequestForm(Project project, PsiParameter psiParameter, PsiMethod psiMethodTarget) {
+    private static List<Map<String, String>> getRequestForm(Project project, PsiParameter psiParameter, PsiMethod psiMethodTarget) {
         List<Map<String, String>> requestForm = new ArrayList<>();
         if (NormalTypes.isNormalType(psiParameter.getType().getPresentableText())) {
             Map<String, String> map = new HashMap<>();
@@ -576,7 +628,7 @@ public class BuildJsonForYapi {
      * @author chengsheng@qbb6.com
      * @since 2019/2/19
      */
-    public static String getResponse(Project project, PsiType psiType, String returnClass) throws RuntimeException {
+    private static String getResponse(Project project, PsiType psiType, String returnClass) throws RuntimeException {
         // 最外层的包装类只会有一个泛型对应接口返回值
         if (!Strings.isNullOrEmpty(returnClass) && !psiType.getCanonicalText().split("<")[0].equals(returnClass)) {
             PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(returnClass, GlobalSearchScope.allScope(project));
@@ -605,7 +657,7 @@ public class BuildJsonForYapi {
         }
     }
 
-    public static KV<String, Object> getPojoJson(Project project, PsiType psiType) throws RuntimeException {
+    private static KV<String, Object> getPojoJson(Project project, PsiType psiType) throws RuntimeException {
         String typeName = psiType.getPresentableText();
         if (psiType instanceof PsiPrimitiveType) {
             //如果是基本类型
@@ -744,7 +796,7 @@ public class BuildJsonForYapi {
      * @author chengsheng@qbb6.com
      * @since 2019/5/15
      */
-    public static KV<String, Object> getFields(PsiClass psiClass, Project project, String[] childType, Integer index, List<String> requiredList, Set<String> pNames) {
+    private static KV<String, Object> getFields(PsiClass psiClass, Project project, String[] childType, Integer index, List<String> requiredList, Set<String> pNames) {
         KV<String, Object> kv = KV.create();
         if (psiClass != null) {
             if (Objects.nonNull(psiClass.getSuperClass()) && Objects.nonNull(NormalTypes.collectTypes.get(psiClass.getSuperClass().getName()))) {
@@ -795,7 +847,7 @@ public class BuildJsonForYapi {
      * @author chengsheng@qbb6.com
      * @since 2019/5/15
      */
-    public static void getField(PsiField field, Project project, KV<String, Object> kv, String[] childType, Integer index, Set<String> pNames) {
+    private static void getField(PsiField field, Project project, KV<String, Object> kv, String[] childType, Integer index, Set<String> pNames) {
         PsiModifierList modifierList = field.getModifierList();
         if (modifierList == null || modifierList.hasModifierProperty(PsiModifier.FINAL)) {
             return;
@@ -985,7 +1037,7 @@ public class BuildJsonForYapi {
      * @author chengsheng@qbb6.com
      * @since 2019/5/15
      */
-    public static void getCollect(KV<String, Object> kv, String classTypeName, String remark, PsiClass psiClass, Project project, String name, Set<String> pNames, String[] childType, Integer index) {
+    private static void getCollect(KV<String, Object> kv, String classTypeName, String remark, PsiClass psiClass, Project project, String name, Set<String> pNames, String[] childType, Integer index) {
         KV<String, Object> kvlist = new KV<>();
         if (NormalTypes.isNormalType(classTypeName) || NormalTypes.collectTypes.containsKey(classTypeName)) {
             kvlist.set("type", Optional.ofNullable(NormalTypes.java2JsonTypes.get(classTypeName)).orElse(classTypeName));
@@ -1017,7 +1069,7 @@ public class BuildJsonForYapi {
      * @author chengsheng@qbb6.com
      * @since 2019/5/6
      */
-    public static boolean addFilePaths(Set<String> filePaths, PsiClass psiClass) {
+    private static boolean addFilePaths(Set<String> filePaths, PsiClass psiClass) {
         try {
             if (!filePaths.contains(((PsiJavaFileImpl) psiClass.getContext()).getViewProvider().getVirtualFile().getPath())) {
                 filePaths.add(((PsiJavaFileImpl) psiClass.getContext()).getViewProvider().getVirtualFile().getPath());
@@ -1045,7 +1097,7 @@ public class BuildJsonForYapi {
      * @author chengsheng@qbb6.com
      * @since 2019/5/6
      */
-    public static void changeFilePath(Project project) {
+    private static void changeFilePath(Project project) {
         Set<String> changeFilePaths = filePaths.stream().map(filePath -> {
             if (filePath.contains(".jar")) {
                 String[] filePathsubs = filePath.split("\\.jar");
@@ -1066,7 +1118,7 @@ public class BuildJsonForYapi {
         filePaths.addAll(changeFilePaths);
     }
 
-    public static void getFilePath(Project project, Set<String> filePaths, List<PsiClass> psiClasses) {
+    private static void getFilePath(Project project, Set<String> filePaths, List<PsiClass> psiClasses) {
         psiClasses.forEach(psiClass -> {
             if (addFilePaths(filePaths, psiClass)) {
                 if (!psiClass.isEnum()) {
@@ -1110,58 +1162,6 @@ public class BuildJsonForYapi {
                 }
             }
         });
-    }
-
-    /**
-     * 批量生成 接口数据
-     */
-    @NotNull
-    @SuppressWarnings("DialogTitleCapitalization")
-    public static List<YapiApiDTO> actionPerformedList(AnActionEvent event, String attachUpload, String returnClass) {
-        Editor editor = event.getDataContext().getData(CommonDataKeys.EDITOR);
-        PsiFile psiFile = event.getDataContext().getData(CommonDataKeys.PSI_FILE);
-        if (editor == null || psiFile == null) {
-            return Collections.emptyList();
-        }
-        String selectedText = event.getRequiredData(CommonDataKeys.EDITOR).getSelectionModel().getSelectedText();
-        Project project = editor.getProject();
-        PsiElement referenceAt = psiFile.findElementAt(editor.getCaretModel().getOffset());
-        PsiClass selectedClass = PsiTreeUtil.getContextOfType(referenceAt, PsiClass.class);
-        if (selectedClass == null) {
-            Messages.showErrorDialog("请使用光标选中一个类", "错误");
-            return Collections.emptyList();
-        }
-        String classMenu = getClassMenu(selectedClass);
-        if (Strings.isNullOrEmpty(selectedText) || selectedText.equals(selectedClass.getName())) {
-            // 获取类下所有方法, 去除私有方法
-            List<YapiApiDTO> yapiApiDTOList = Arrays.stream(selectedClass.getMethods())
-                    .filter(it -> !it.getModifierList().hasModifierProperty(PsiModifier.PRIVATE) && it.getReturnType() != null)
-                    .map(it -> actionPerformed(selectedClass, it, project, attachUpload, returnClass))
-                    .filter(Objects::nonNull).collect(Collectors.toList());
-            for (YapiApiDTO yapiApi : yapiApiDTOList) {
-                if (yapiApi.getMenu() == null) {
-                    yapiApi.setMenu(classMenu);
-                }
-            }
-            return yapiApiDTOList;
-        } else {
-            // 寻找目标方法
-            List<YapiApiDTO> yapiApiDTOList = Arrays.stream(selectedClass.getAllMethods())
-                    .filter(it -> it.getName().equals(selectedText))
-                    .map(it -> actionPerformed(selectedClass, it, project, attachUpload, returnClass))
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-            if (yapiApiDTOList.isEmpty()) {
-                Notification error = notificationGroup.createNotification("can not find method:" + selectedText, NotificationType.ERROR);
-                Notifications.Bus.notify(error, project);
-                return Collections.emptyList();
-            }
-            YapiApiDTO yapiApiDTO = yapiApiDTOList.get(0);
-            if (yapiApiDTO.getMenu() == null) {
-                yapiApiDTO.setMenu(classMenu);
-            }
-            return yapiApiDTOList;
-        }
     }
 
     @NotNull
