@@ -18,12 +18,28 @@ import java.util.stream.Collectors;
 /**
  * 上传策略枚举类
  */
+@SuppressWarnings("SpellCheckingInspection")
 public enum ApiUplooadStrategyEnum {
 
+    /**
+     * 处理 dubbo 接口
+     */
     DUBBO(ProjectTypeConstant.dubbo, ApiUplooadStrategyEnum::uploadForDubbo),
+    /**
+     * 处理 restAPI 接口
+     */
     API(ProjectTypeConstant.api, ApiUplooadStrategyEnum::uploadForApi);
+    /**
+     * 该策略支持的接口类型
+     */
     private final String type;
+    /**
+     * 执行策略的方法
+     */
     private final BiFunction<AnActionEvent, ConfigDTO, String> uploadFunction;
+    /**
+     * 枚举 set, 方便通过 type 查找策略
+     */
     private static final Set<ApiUplooadStrategyEnum> handlers = EnumSet.allOf(ApiUplooadStrategyEnum.class);
 
     ApiUplooadStrategyEnum(String type, BiFunction<AnActionEvent, ConfigDTO, String> uploadFunction) {
