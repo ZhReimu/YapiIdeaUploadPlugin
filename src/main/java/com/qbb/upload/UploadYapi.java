@@ -98,14 +98,13 @@ public class UploadYapi {
         try {
             String url = yapiSaveParam.getYapiUrl() + YapiConstant.yapiCatMenu + "?project_id="
                     + yapiSaveParam.getProjectId() + "&token=" + yapiSaveParam.getToken();
-            String response = XUtils.doGet(url);
-            YapiResponse<List<YapiCatResponse>> yapiResponse = gson.fromJson(response, new TypeToken<List<YapiCatResponse>>() {
-            }.getType());
+            YapiResponse<List<YapiCatResponse>> yapiResponse = XUtils.doGet(url, new TypeToken<YapiResponse<List<YapiCatResponse>>>() {
+            });
             if (yapiResponse.getErrcode() == 0) {
                 List<YapiCatResponse> list = yapiResponse.getData();
                 String[] menus = yapiSaveParam.getMenu().split("/");
                 // 循环多级菜单，判断是否存在，如果不存在就创建
-                //  解决多级菜单创建问题
+                // 解决多级菜单创建问题
                 Integer parent_id = -1;
                 Integer now_id;
                 for (int i = 0; i < menus.length; i++) {
@@ -134,7 +133,7 @@ public class UploadYapi {
             return new YapiResponse<>();
         } catch (Exception e) {
             try {
-                //出现这种情况可能是yapi 版本不支持
+                // 出现这种情况可能是 yapi 版本不支持
                 yapiSaveParam.setCatid(addMenu(yapiSaveParam, -1, yapiSaveParam.getMenu()).toString());
                 return new YapiResponse<>();
             } catch (IOException ignored) {

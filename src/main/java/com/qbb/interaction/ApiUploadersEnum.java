@@ -23,14 +23,18 @@ public enum ApiUploadersEnum {
         @Nullable
         @Override
         public String uploadToYapi(AnActionEvent event, ConfigDTO config) {
-            return uploadForDubbo(event, config);
+            String url = uploadForDubbo(event, config);
+            Messages.showInfoMessage("上传成功, 接口文档 url 地址:  " + url, "上传成功！");
+            return url;
         }
     },
     API(ProjectTypeConstant.api) {
         @Nullable
         @Override
         public String uploadToYapi(AnActionEvent event, ConfigDTO config) {
-            return uploadForApi(event, config);
+            String url = uploadForApi(event, config);
+            Messages.showInfoMessage("上传成功, 接口文档 url 地址:  " + url, "上传成功！");
+            return url;
         }
     };
     private final String type;
@@ -80,9 +84,7 @@ public enum ApiUploadersEnum {
             if (yapiResponse.getErrcode() != 0) {
                 Messages.showInfoMessage("上传失败，原因:  " + yapiResponse.getErrmsg(), "上传失败！");
             } else {
-                String url = config.getYapiUrl() + "/project/" + config.getProjectId() + "/interface/api/cat_" + yapiResponse.getCatId();
-                Messages.showInfoMessage("上传成功！接口文档url地址:  " + url, "上传成功！");
-                return url;
+                return config.getYapiUrl() + "/project/" + config.getProjectId() + "/interface/api/cat_" + yapiResponse.getCatId();
             }
         } catch (Exception e) {
             Messages.showErrorDialog("上传失败！异常:  " + e, "上传失败！");

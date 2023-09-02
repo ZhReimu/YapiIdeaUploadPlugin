@@ -1,6 +1,7 @@
 package com.qbb.util;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -52,6 +53,10 @@ public class XUtils {
                 return enumeration.nextElement();
             }
         };
+    }
+
+    public static <T> T doGet(String url, TypeToken<T> typeToken) throws IOException {
+        return gson.fromJson(doGet(url), typeToken.getType());
     }
 
     /**
