@@ -190,29 +190,26 @@ public class PsiAnnotationSearchUtil {
 
 
     /**
-     * 获取psi注解value
-     *
-     * @param psiParameter
-     * @param annotationName
-     * @return
+     * 获取 psi 注解 value 的值
      */
-    public static String getPsiParameterAnnotationValue(PsiModifierListOwner psiParameter, String annotationName) {
-        return getPsiParameterAnnotationParam(psiParameter, annotationName, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+    public static String getPsiAnnotationValue(PsiModifierListOwner psiParameter, String annotationName) {
+        return findPsiAnnotationParam(psiParameter, annotationName, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
     }
 
     /**
-     * 获取注解某个值
+     * 获取指定 psi 对象上的指定注解中该注解的某个参数
      *
-     * @param psiParameter
-     * @param annotationName
-     * @return
+     * @param psiParameter   psi 对象
+     * @param annotationName 注解全限定名
+     * @param paramName      注解参数
+     * @return 找到的注解参数, 找不到注解或者参数为 null 就会返回 null
      */
-    public static String getPsiParameterAnnotationParam(PsiModifierListOwner psiParameter, String annotationName, String paramName) {
+    @Nullable
+    public static String findPsiAnnotationParam(PsiModifierListOwner psiParameter, String annotationName, String paramName) {
         PsiAnnotation annotation = PsiAnnotationSearchUtil.findAnnotation(psiParameter, annotationName);
         if (annotation == null) {
             return null;
         }
-
         return AnnotationUtil.getStringAttributeValue(annotation, paramName);
     }
 

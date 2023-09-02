@@ -141,8 +141,8 @@ public class BuildJsonForDubbo {
      * @author chengsheng@qbb6.com
      * @since 2019/2/19
      */
-    @SuppressWarnings("DialogTitleCapitalization")
     @NotNull
+    @SuppressWarnings("DialogTitleCapitalization")
     public static List<YapiDubboDTO> actionPerformedList(AnActionEvent event) {
         Editor editor = event.getDataContext().getData(CommonDataKeys.EDITOR);
         PsiFile psiFile = event.getDataContext().getData(CommonDataKeys.PSI_FILE);
