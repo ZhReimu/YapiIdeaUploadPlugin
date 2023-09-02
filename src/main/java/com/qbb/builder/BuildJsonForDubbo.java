@@ -57,7 +57,7 @@ public class BuildJsonForDubbo {
                     String fieldTypeName = type.getPresentableText();
                     //normal Type
                     if (NormalTypes.isNormalType(fieldTypeName)) {
-                        kv.set(name, NormalTypes.normalTypes.get(fieldTypeName));
+                        kv.set(name, NormalTypes.getNormalType(fieldTypeName));
                     } else if (!(type instanceof PsiArrayType) && ((PsiClassReferenceType) type).resolve().isEnum()) {
                         kv.set(name, fieldTypeName);
                     } else if (type instanceof PsiArrayType) {
@@ -68,7 +68,7 @@ public class BuildJsonForDubbo {
                         if (deepType instanceof PsiPrimitiveType) {
                             list.add(PsiTypesUtil.getDefaultValueOfType(deepType));
                         } else if (NormalTypes.isNormalType(deepTypeName)) {
-                            list.add(NormalTypes.normalTypes.get(deepTypeName));
+                            list.add(NormalTypes.getNormalType(deepTypeName));
                         } else {
                             if (!pName.equals(PsiUtil.resolveClassInType(deepType).getName())) {
                                 list.add(getFields(PsiUtil.resolveClassInType(deepType), project));
@@ -84,7 +84,7 @@ public class BuildJsonForDubbo {
                         ArrayList list = new ArrayList<>();
                         String classTypeName = iterableClass.getName();
                         if (NormalTypes.isNormalType(classTypeName)) {
-                            list.add(NormalTypes.normalTypes.get(classTypeName));
+                            list.add(NormalTypes.getNormalType(classTypeName));
                         } else {
                             if (!pName.equals(iterableClass.getName())) {
                                 list.add(getFields(iterableClass, project));
@@ -112,7 +112,7 @@ public class BuildJsonForDubbo {
                         Set set = new HashSet();
                         String classTypeName = iterableClass.getName();
                         if (NormalTypes.isNormalType(classTypeName)) {
-                            set.add(NormalTypes.normalTypes.get(classTypeName));
+                            set.add(NormalTypes.getNormalType(classTypeName));
                         } else {
                             if (!pName.equals(iterableClass.getName())) {
                                 set.add(getFields(iterableClass, project));
@@ -220,17 +220,18 @@ public class BuildJsonForDubbo {
             }
             PsiParameter[] psiParameters = psiMethodTarget.getParameterList().getParameters();
             for (PsiParameter psiParameter : psiParameters) {
+                String typeName = psiParameter.getType().getPresentableText();
                 if (psiParameter.getType() instanceof PsiPrimitiveType) {
                     //如果是基本类型
                     KV kvClass = KV.create();
-                    kvClass.set(psiParameter.getType().getCanonicalText(), NormalTypes.normalTypes.get(psiParameter.getType().getPresentableText()));
+                    kvClass.set(psiParameter.getType().getCanonicalText(), NormalTypes.getNormalType(typeName));
                     list.add(kvClass);
-                } else if (NormalTypes.isNormalType(psiParameter.getType().getPresentableText())) {
+                } else if (NormalTypes.isNormalType(typeName)) {
                     //如果是包装类型
                     KV kvClass = KV.create();
-                    kvClass.set(psiParameter.getType().getCanonicalText(), NormalTypes.normalTypes.get(psiParameter.getType().getPresentableText()));
+                    kvClass.set(psiParameter.getType().getCanonicalText(), NormalTypes.getNormalType(typeName));
                     list.add(kvClass);
-                } else if (psiParameter.getType().getPresentableText().startsWith("List")) {
+                } else if (typeName.startsWith("List")) {
                     ArrayList listChild = new ArrayList<>();
                     String[] types = psiParameter.getType().getCanonicalText().split("<");
                     if (types.length > 1) {
@@ -248,7 +249,7 @@ public class BuildJsonForDubbo {
                     KV kvClass = KV.create();
                     kvClass.set(types[0], listChild);
                     list.add(kvClass);
-                } else if (psiParameter.getType().getPresentableText().startsWith("Set")) {
+                } else if (typeName.startsWith("Set")) {
                     HashSet setChild = new HashSet();
                     String[] types = psiParameter.getType().getCanonicalText().split("<");
                     if (types.length > 1) {
@@ -267,7 +268,7 @@ public class BuildJsonForDubbo {
                     KV kvClass = KV.create();
                     kvClass.set(types[0], setChild);
                     list.add(kvClass);
-                } else if (psiParameter.getType().getPresentableText().startsWith("Map")) {
+                } else if (typeName.startsWith("Map")) {
                     HashMap hashMapChild = new HashMap();
                     String[] types = psiParameter.getType().getCanonicalText().split("<");
                     if (types.length > 1) {

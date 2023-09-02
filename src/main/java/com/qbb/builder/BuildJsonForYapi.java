@@ -343,9 +343,9 @@ public class BuildJsonForYapi {
             List<YapiHeaderDTO> yapiHeaderDTOList = new ArrayList<>();
             List<YapiPathVariableDTO> yapiPathVariableDTOList = new ArrayList<>();
             for (PsiParameter psiParameter : psiParameters) {
-                if (JavaConstant.HttpServletRequest.equals(psiParameter.getType().getCanonicalText())
-                        || JavaConstant.HttpServletResponse.equals(psiParameter.getType().getCanonicalText())
-                ) {
+                String paramObj = psiParameter.getType().getCanonicalText();
+                // 不处理 ServletRequest 和 ServletResponse 入参对象
+                if (JavaConstant.HttpServletRequest.equals(paramObj) || JavaConstant.HttpServletResponse.equals(paramObj)) {
                     continue;
                 }
                 PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParameter, SpringMVCConstant.RequestBody);
@@ -371,6 +371,8 @@ public class BuildJsonForYapi {
                         PsiNameValuePair[] psiNameValuePairs = psiAnnotation.getParameterList().getAttributes();
                         YapiQueryDTO yapiQueryDTO = new YapiQueryDTO();
 
+                        String typeName = psiParameter.getType().getPresentableText();
+                        String normalType = NormalTypes.getNormalType(typeName);
                         if (psiNameValuePairs.length > 0) {
                             for (PsiNameValuePair psiNameValuePair : psiNameValuePairs) {
                                 String name = psiNameValuePair.getName();
@@ -399,52 +401,51 @@ public class BuildJsonForYapi {
                                     if (yapiHeaderDTO != null) {
                                         yapiHeaderDTO.setName(psiNameValuePair.getLiteralValue());
                                         // 通过方法注释获得 描述 加上 类型
-                                        yapiHeaderDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + psiParameter.getType().getPresentableText() + ")");
+                                        yapiHeaderDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + typeName + ")");
                                     }
                                     if (yapiPathVariableDTO != null) {
                                         yapiPathVariableDTO.setName(psiNameValuePair.getLiteralValue());
                                         // 通过方法注释获得 描述 加上 类型
-                                        yapiPathVariableDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + psiParameter.getType().getPresentableText() + ")");
+                                        yapiPathVariableDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + typeName + ")");
                                     } else {
                                         yapiQueryDTO.setName(psiNameValuePair.getLiteralValue());
                                         // 通过方法注释获得 描述 加上 类型
-                                        yapiQueryDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + psiParameter.getType().getPresentableText() + ")");
+                                        yapiQueryDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + typeName + ")");
                                     }
-                                    if (NormalTypes.normalTypes.containsKey(psiParameter.getType().getPresentableText())) {
+                                    if (normalType != null) {
                                         if (yapiHeaderDTO != null) {
-                                            yapiHeaderDTO.setExample(NormalTypes.normalTypes.get(psiParameter.getType().getPresentableText()).toString());
+                                            yapiHeaderDTO.setExample(normalType);
                                         } else if (yapiPathVariableDTO != null) {
-                                            yapiPathVariableDTO.setExample(NormalTypes.normalTypes.get(psiParameter.getType().getPresentableText()).toString());
+                                            yapiPathVariableDTO.setExample(normalType);
                                         } else {
-                                            yapiQueryDTO.setExample(NormalTypes.normalTypes.get(psiParameter.getType().getPresentableText()).toString());
+                                            yapiQueryDTO.setExample(normalType);
                                         }
                                     } else {
                                         yapiApiDTO.setRequestBody(getResponse(project, psiParameter.getType(), null));
                                     }
-
                                 }
                             }
                         } else {
                             if (yapiHeaderDTO != null) {
                                 yapiHeaderDTO.setName(psiParameter.getName());
                                 // 通过方法注释获得 描述 加上 类型
-                                yapiHeaderDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + psiParameter.getType().getPresentableText() + ")");
+                                yapiHeaderDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + typeName + ")");
                             } else if (yapiPathVariableDTO != null) {
                                 yapiPathVariableDTO.setName(psiParameter.getName());
                                 // 通过方法注释获得 描述 加上 类型
-                                yapiPathVariableDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + psiParameter.getType().getPresentableText() + ")");
+                                yapiPathVariableDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + typeName + ")");
                             } else {
                                 yapiQueryDTO.setName(psiParameter.getName());
                                 // 通过方法注释获得 描述 加上 类型
-                                yapiQueryDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + psiParameter.getType().getPresentableText() + ")");
+                                yapiQueryDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + typeName + ")");
                             }
-                            if (NormalTypes.normalTypes.containsKey(psiParameter.getType().getPresentableText())) {
+                            if (normalType != null) {
                                 if (yapiHeaderDTO != null) {
-                                    yapiHeaderDTO.setExample(NormalTypes.normalTypes.get(psiParameter.getType().getPresentableText()).toString());
+                                    yapiHeaderDTO.setExample(normalType);
                                 } else if (yapiPathVariableDTO != null) {
-                                    yapiPathVariableDTO.setExample(NormalTypes.normalTypes.get(psiParameter.getType().getPresentableText()).toString());
+                                    yapiPathVariableDTO.setExample(normalType);
                                 } else {
-                                    yapiQueryDTO.setExample(NormalTypes.normalTypes.get(psiParameter.getType().getPresentableText()).toString());
+                                    yapiQueryDTO.setExample(normalType);
                                 }
                             } else {
                                 yapiApiDTO.setRequestBody(getResponse(project, psiParameter.getType(), null));
@@ -453,10 +454,10 @@ public class BuildJsonForYapi {
                         if (yapiHeaderDTO != null) {
                             if (Strings.isNullOrEmpty(yapiHeaderDTO.getDesc())) {
                                 // 通过方法注释获得 描述  加上 类型
-                                yapiHeaderDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + psiParameter.getType().getPresentableText() + ")");
+                                yapiHeaderDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + typeName + ")");
                             }
-                            if (Strings.isNullOrEmpty(yapiHeaderDTO.getExample()) && NormalTypes.normalTypes.containsKey(psiParameter.getType().getPresentableText())) {
-                                yapiHeaderDTO.setExample(NormalTypes.normalTypes.get(psiParameter.getType().getPresentableText()).toString());
+                            if (Strings.isNullOrEmpty(yapiHeaderDTO.getExample()) && normalType != null) {
+                                yapiHeaderDTO.setExample(normalType);
                             }
                             if (Strings.isNullOrEmpty(yapiHeaderDTO.getName())) {
                                 yapiHeaderDTO.setName(psiParameter.getName());
@@ -465,10 +466,10 @@ public class BuildJsonForYapi {
                         } else if (yapiPathVariableDTO != null) {
                             if (Strings.isNullOrEmpty(yapiPathVariableDTO.getDesc())) {
                                 // 通过方法注释获得 描述  加上 类型
-                                yapiPathVariableDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + psiParameter.getType().getPresentableText() + ")");
+                                yapiPathVariableDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + typeName + ")");
                             }
-                            if (Strings.isNullOrEmpty(yapiPathVariableDTO.getExample()) && NormalTypes.normalTypes.containsKey(psiParameter.getType().getPresentableText())) {
-                                yapiPathVariableDTO.setExample(NormalTypes.normalTypes.get(psiParameter.getType().getPresentableText()).toString());
+                            if (Strings.isNullOrEmpty(yapiPathVariableDTO.getExample()) && normalType != null) {
+                                yapiPathVariableDTO.setExample(normalType);
                             }
                             if (Strings.isNullOrEmpty(yapiPathVariableDTO.getName())) {
                                 yapiPathVariableDTO.setName(psiParameter.getName());
@@ -481,10 +482,10 @@ public class BuildJsonForYapi {
                         } else {
                             if (Strings.isNullOrEmpty(yapiQueryDTO.getDesc())) {
                                 // 通过方法注释获得 描述 加上 类型
-                                yapiQueryDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + psiParameter.getType().getPresentableText() + ")");
+                                yapiQueryDTO.setDesc(DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + typeName + ")");
                             }
-                            if (Strings.isNullOrEmpty(yapiQueryDTO.getExample()) && NormalTypes.normalTypes.containsKey(psiParameter.getType().getPresentableText())) {
-                                yapiQueryDTO.setExample(NormalTypes.normalTypes.get(psiParameter.getType().getPresentableText()).toString());
+                            if (Strings.isNullOrEmpty(yapiQueryDTO.getExample()) && normalType != null) {
+                                yapiQueryDTO.setExample(normalType);
                             }
                             if (Strings.isNullOrEmpty(yapiQueryDTO.getName())) {
                                 yapiQueryDTO.setName(psiParameter.getName());
@@ -532,13 +533,13 @@ public class BuildJsonForYapi {
      */
     public static List<Map<String, String>> getRequestForm(Project project, PsiParameter psiParameter, PsiMethod psiMethodTarget) {
         List<Map<String, String>> requestForm = new ArrayList<>();
-        if (NormalTypes.normalTypes.containsKey(psiParameter.getType().getPresentableText())) {
+        if (NormalTypes.isNormalType(psiParameter.getType().getPresentableText())) {
             Map<String, String> map = new HashMap<>();
             map.put("name", psiParameter.getName());
             map.put("type", "text");
             String remark = DesUtil.getParamDesc(psiMethodTarget, psiParameter.getName()) + "(" + psiParameter.getType().getPresentableText() + ")";
             map.put("desc", remark);
-            map.put("example", NormalTypes.normalTypes.get(psiParameter.getType().getPresentableText()).toString());
+            map.put("example", NormalTypes.getNormalType(psiParameter.getType().getPresentableText()));
             requestForm.add(map);
         } else {
             PsiClass psiClass = JavaPsiFacade.getInstance(project)
@@ -558,9 +559,9 @@ public class BuildJsonForYapi {
                 remark = DesUtil.getLinkRemark(remark, project, field);
                 map.put("desc", remark);
                 field.getType().getPresentableText();
-                Object obj = NormalTypes.normalTypes.get(field.getType().getPresentableText());
-                if (Objects.nonNull(obj)) {
-                    map.put("example", NormalTypes.normalTypes.get(field.getType().getPresentableText()).toString());
+                String normalType = NormalTypes.getNormalType(field.getType().getPresentableText());
+                if (normalType != null) {
+                    map.put("example", normalType);
                 }
                 getFilePath(project, filePaths, DesUtil.getFieldLinks(project, field));
                 requestForm.add(map);
@@ -605,15 +606,16 @@ public class BuildJsonForYapi {
     }
 
     public static KV<String, Object> getPojoJson(Project project, PsiType psiType) throws RuntimeException {
+        String typeName = psiType.getPresentableText();
         if (psiType instanceof PsiPrimitiveType) {
             //如果是基本类型
             KV<String, Object> kvClass = KV.create();
-            kvClass.set(psiType.getCanonicalText(), NormalTypes.normalTypes.get(psiType.getPresentableText()));
-        } else if (NormalTypes.isNormalType(psiType.getPresentableText())) {
+            kvClass.set(psiType.getCanonicalText(), NormalTypes.getNormalType(typeName));
+        } else if (NormalTypes.isNormalType(typeName)) {
             //如果是包装类型
             KV<String, Object> kvClass = KV.create();
-            kvClass.set(psiType.getCanonicalText(), NormalTypes.normalTypes.get(psiType.getPresentableText()));
-        } else if (psiType.getPresentableText().startsWith("List")) {
+            kvClass.set(psiType.getCanonicalText(), NormalTypes.getNormalType(typeName));
+        } else if (typeName.startsWith("List")) {
             String[] types = psiType.getCanonicalText().split("<");
             KV<String, Object> listKv = new KV<>();
             if (types.length > 1) {
@@ -639,11 +641,11 @@ public class BuildJsonForYapi {
             }
             KV<String, Object> result = new KV<>();
             result.set("type", "array");
-            result.set("title", psiType.getPresentableText());
-            result.set("description", psiType.getPresentableText());
+            result.set("title", typeName);
+            result.set("description", typeName);
             result.set("items", listKv);
             return result;
-        } else if (psiType.getPresentableText().startsWith("Set")) {
+        } else if (typeName.startsWith("Set")) {
             String[] types = psiType.getCanonicalText().split("<");
             KV<String, Object> listKv = new KV<>();
             if (types.length > 1) {
@@ -669,11 +671,11 @@ public class BuildJsonForYapi {
             }
             KV<String, Object> result = new KV<>();
             result.set("type", "array");
-            result.set("title", psiType.getPresentableText());
-            result.set("description", psiType.getPresentableText());
+            result.set("title", typeName);
+            result.set("description", typeName);
             result.set("items", listKv);
             return result;
-        } else if (psiType.getPresentableText().startsWith("Map") || psiType.getPresentableText().startsWith("HashMap") || psiType.getPresentableText().startsWith("LinkedHashMap")) {
+        } else if (typeName.startsWith("Map") || typeName.startsWith("HashMap") || typeName.startsWith("LinkedHashMap")) {
             KV<String, Object> kv1 = new KV<>();
             kv1.set(KV.by("type", "object"));
             kv1.set(KV.by("description", "(该参数为map)"));
@@ -695,10 +697,10 @@ public class BuildJsonForYapi {
                 kv1.set(KV.by("description", "请完善Map<?,?>"));
             }
             return kv1;
-        } else if (NormalTypes.collectTypes.containsKey(psiType.getPresentableText())) {
+        } else if (NormalTypes.collectTypes.containsKey(typeName)) {
             //如果是集合类型
             KV<String, Object> kvClass = KV.create();
-            kvClass.set(psiType.getCanonicalText(), NormalTypes.collectTypes.get(psiType.getPresentableText()));
+            kvClass.set(psiType.getCanonicalText(), NormalTypes.collectTypes.get(typeName));
         } else {
             String[] types = psiType.getCanonicalText().split("<");
             if (types.length > 1) {
@@ -707,13 +709,13 @@ public class BuildJsonForYapi {
                 List<String> requiredList = new ArrayList<>();
                 KV<String, Object> kvObject = getFields(psiClassChild, project, types, 1, requiredList, new HashSet<>());
                 result.set("type", "object");
-                result.set("title", psiType.getPresentableText());
+                result.set("title", typeName);
                 result.set("required", requiredList);
                 addFilePaths(filePaths, psiClassChild);
                 if (Objects.nonNull(psiClassChild.getSuperClass()) && !psiClassChild.getSuperClass().getName().equals("Object")) {
                     addFilePaths(filePaths, psiClassChild.getSuperClass());
                 }
-                result.set("description", (psiType.getPresentableText() + " :" + psiClassChild.getName()).trim());
+                result.set("description", (typeName + " :" + psiClassChild.getName()).trim());
                 result.set("properties", kvObject);
                 return result;
             } else {
@@ -727,8 +729,8 @@ public class BuildJsonForYapi {
                 }
                 result.set("type", "object");
                 result.set("required", requiredList);
-                result.set("title", psiType.getPresentableText());
-                result.set("description", (psiType.getPresentableText() + " :" + psiClassChild.getName()).trim());
+                result.set("title", typeName);
+                result.set("description", (typeName + " :" + psiClassChild.getName()).trim());
                 result.set("properties", kvObject);
                 return result;
             }
