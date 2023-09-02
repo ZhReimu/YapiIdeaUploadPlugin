@@ -2,6 +2,8 @@ package com.qbb.util;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.qbb.dto.YapiCatResponse;
+import com.qbb.dto.YapiResponse;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -30,6 +32,11 @@ public class XUtils {
                 return chain.proceed(request);
             }).build();
 
+    public static final TypeToken<YapiResponse<List<YapiCatResponse>>> YAPI_RESPONSE_CATS = new TypeToken<YapiResponse<List<YapiCatResponse>>>() {
+    };
+    public static final TypeToken<YapiResponse<YapiCatResponse>> YAPI_RESPONSE_CAT = new TypeToken<YapiResponse<YapiCatResponse>>() {
+    };
+
     /**
      * 为 {@link Enumeration} 类创建一个 Stream
      */
@@ -57,6 +64,10 @@ public class XUtils {
 
     public static <T> T doGet(String url, TypeToken<T> typeToken) throws IOException {
         return gson.fromJson(doGet(url), typeToken.getType());
+    }
+
+    public static <T> T doPost(String url, Object body, TypeToken<T> typeToken) throws IOException {
+        return gson.fromJson(doPost(url, body), typeToken.getType());
     }
 
     /**

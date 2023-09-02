@@ -2,7 +2,6 @@ package com.qbb.upload;
 
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.qbb.constant.YapiConstant;
 import com.qbb.dto.*;
 import com.qbb.util.XUtils;
@@ -12,6 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+
+import static com.qbb.util.XUtils.YAPI_RESPONSE_CAT;
+import static com.qbb.util.XUtils.YAPI_RESPONSE_CATS;
 
 /**
  * 上传到 yapi
@@ -98,8 +100,7 @@ public class UploadYapi {
         try {
             String url = yapiSaveParam.getYapiUrl() + YapiConstant.yapiCatMenu + "?project_id="
                     + yapiSaveParam.getProjectId() + "&token=" + yapiSaveParam.getToken();
-            YapiResponse<List<YapiCatResponse>> yapiResponse = XUtils.doGet(url, new TypeToken<YapiResponse<List<YapiCatResponse>>>() {
-            });
+            YapiResponse<List<YapiCatResponse>> yapiResponse = XUtils.doGet(url, YAPI_RESPONSE_CATS);
             if (yapiResponse.getErrcode() == 0) {
                 List<YapiCatResponse> list = yapiResponse.getData();
                 String[] menus = yapiSaveParam.getMenu().split("/");
@@ -151,10 +152,8 @@ public class UploadYapi {
     private static Integer addMenu(YapiSaveParam yapiSaveParam, Integer parent_id, String menu) throws IOException {
         YapiCatMenuParam yapiCatMenuParam = new YapiCatMenuParam(menu, yapiSaveParam.getProjectId(), yapiSaveParam.getToken(), parent_id);
         String url = yapiSaveParam.getYapiUrl() + YapiConstant.yapiAddCat;
-        String body = gson.toJson(yapiCatMenuParam);
-        String responseCat = XUtils.doPost(url, body);
-        YapiCatResponse yapiCatResponse = gson.fromJson(gson.fromJson(responseCat, YapiResponse.class).getData().toString(), YapiCatResponse.class);
-        return yapiCatResponse.get_id();
+        YapiResponse<YapiCatResponse> yapiCatResponse = XUtils.doPost(url, yapiCatMenuParam, YAPI_RESPONSE_CAT);
+        return yapiCatResponse.getData().get_id();
     }
 
 
