@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 上传到 yapi
@@ -42,19 +43,13 @@ public class UploadYapi {
             yapiHeaderDTO.setValue("application/json");
             yapiSaveParam.setReq_body_type("json");
         }
-        if (Objects.isNull(yapiSaveParam.getReq_headers())) {
-            List<YapiHeaderDTO> list = new ArrayList<>();
-            list.add(yapiHeaderDTO);
-            yapiSaveParam.setReq_headers(list);
-        } else {
-            yapiSaveParam.getReq_headers().add(yapiHeaderDTO);
-        }
+        List<YapiHeaderDTO> headers = Optional.ofNullable(yapiSaveParam.getReq_headers()).orElseGet(ArrayList::new);
+        headers.add(yapiHeaderDTO);
+        yapiSaveParam.setReq_headers(headers);
         // changeDesByPath(yapiSaveParam);
-        YapiResponse<?> yapiResponse = getCatIdOrCreate(yapiSaveParam);
+        YapiResponse<?> yapiResponse = getOrCreateCatId(yapiSaveParam);
         if (yapiResponse.getErrcode() == 0) {
-            String url = yapiSaveParam.getYapiUrl() + YapiConstant.yapiSave;
-            String body = gson.toJson(yapiSaveParam);
-            String response = XUtils.doPost(url, body);
+            String response = XUtils.doPost(yapiSaveParam.getYapiUrl() + YapiConstant.yapiSave, gson.toJson(yapiSaveParam));
             YapiResponse<?> yapiResponseResult = gson.fromJson(response, YapiResponse.class);
             yapiResponseResult.setCatId(yapiSaveParam.getCatid());
             return yapiResponseResult;
@@ -95,7 +90,7 @@ public class UploadYapi {
      * @author chengsheng@qbb6.com
      * @since 2019/5/15
      */
-    public static YapiResponse<?> getCatIdOrCreate(YapiSaveParam yapiSaveParam) {
+    public static YapiResponse<?> getOrCreateCatId(YapiSaveParam yapiSaveParam) {
         // 如果缓存不存在，切自定义菜单为空，则使用默认目录
         if (Strings.isNullOrEmpty(yapiSaveParam.getMenu())) {
             yapiSaveParam.setMenu(YapiConstant.menu);
