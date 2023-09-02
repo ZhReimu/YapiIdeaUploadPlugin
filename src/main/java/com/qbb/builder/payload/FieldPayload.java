@@ -1,5 +1,6 @@
 package com.qbb.builder.payload;
 
+import com.google.gson.JsonObject;
 import com.qbb.builder.KV;
 import com.qbb.builder.NormalTypes;
 import lombok.Data;
@@ -14,6 +15,7 @@ public class FieldPayload extends BasePayload {
 
     private String type;
     private String title;
+    private JsonObject mock;
     private String description;
     private Map<String, Object> properties;
     private List<String> required;

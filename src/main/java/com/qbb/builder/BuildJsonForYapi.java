@@ -795,7 +795,8 @@ public class BuildJsonForYapi {
                 }
                 Set<String> pNameList = new HashSet<>(pNames);
                 pNameList.add(psiClass.getName());
-                getField(field, project, kv, childType, index, pNameList);
+                KV<String, Object> fieldInfo = getFieldInfo(field, project, childType, index, pNameList);
+                kv.putAll(fieldInfo);
             }
         } else {
             if (NormalTypes.genericList.contains(psiClass.getName()) && childType != null && childType.length > index) {
@@ -818,7 +819,8 @@ public class BuildJsonForYapi {
                 for (PsiField field : normalFields) {
                     Set<String> pNameList = new HashSet<>(pNames);
                     pNameList.add(psiClass.getName());
-                    getField(field, project, kv, childType, index, pNameList);
+                    KV<String, Object> fieldInfo = getFieldInfo(field, project, childType, index, pNameList);
+                    kv.putAll(fieldInfo);
                 }
             }
         }
@@ -831,15 +833,17 @@ public class BuildJsonForYapi {
      * @author chengsheng@qbb6.com
      * @since 2019/5/15
      */
-    private static void getField(PsiField field, Project project, KV<String, Object> kv, String[] childType, Integer index, Set<String> pNames) {
+    private static KV<String, Object> getFieldInfo(PsiField field, Project project, String[] childType, Integer index, Set<String> pNames) {
+        KV<String, Object> kv = KV.create();
         PsiModifierList modifierList = field.getModifierList();
         if (modifierList == null || modifierList.hasModifierProperty(PsiModifier.FINAL)) {
-            return;
+            return kv;
         }
         PsiType type = field.getType();
         String name = field.getName();
         // swagger 支持
-        String remark = StringUtils.defaultIfEmpty(PsiAnnotationUtils.getPsiAnnotationValue(field, SwaggerConstants.API_MODEL_PROPERTY), "");
+        String swaggerValue = PsiAnnotationUtils.getPsiAnnotationValue(field, SwaggerConstants.API_MODEL_PROPERTY);
+        String remark = StringUtils.defaultIfEmpty(swaggerValue, "");
         if (field.getDocComment() != null) {
             if (Strings.isNullOrEmpty(remark)) {
                 remark = DesUtil.getFiledDesc(field.getDocComment());
@@ -849,15 +853,15 @@ public class BuildJsonForYapi {
             getFilePath(project, filePaths, DesUtil.getFieldLinks(project, field));
         }
         // 如果是基本类型
+        String swaggerExample = PsiAnnotationUtils.findPsiAnnotationParam(field, SwaggerConstants.API_MODEL_PROPERTY, "example");
         if (type instanceof PsiPrimitiveType) {
-            JsonObject jsonObject = new JsonObject();
-            jsonObject.addProperty("type", NormalTypes.java2JsonType(type.getPresentableText()));
+            FieldPayload fieldPayload = new FieldPayload();
+            fieldPayload.setType(NormalTypes.java2JsonType(type.getPresentableText()));
             if (!Strings.isNullOrEmpty(remark)) {
-                jsonObject.addProperty("description", remark);
+                fieldPayload.setDescription(remark);
             }
-            jsonObject.add("mock", NormalTypes.formatMockType(type.getPresentableText()
-                    , PsiAnnotationUtils.findPsiAnnotationParam(field, SwaggerConstants.API_MODEL_PROPERTY, "example")));
-            kv.set(name, jsonObject);
+            fieldPayload.setMock(NormalTypes.formatMockType(type.getPresentableText(), swaggerExample));
+            kv.set(name, fieldPayload);
         } else {
             // reference Type
             String fieldTypeName = type.getPresentableText();
@@ -869,7 +873,7 @@ public class BuildJsonForYapi {
                     jsonObject.addProperty("description", remark);
                 }
                 jsonObject.add("mock", NormalTypes.formatMockType(type.getPresentableText()
-                        , PsiAnnotationUtils.findPsiAnnotationParam(field, SwaggerConstants.API_MODEL_PROPERTY, "example")));
+                        , swaggerExample));
                 kv.set(name, jsonObject);
             } else if (!(type instanceof PsiArrayType) && ((PsiClassReferenceType) type).resolve().isEnum()) {
                 JsonObject jsonObject = new JsonObject();
@@ -902,7 +906,7 @@ public class BuildJsonForYapi {
                         PsiClass psiClassChild = JavaPsiFacade.getInstance(project)
                                 .findClass(childType[index].split(">")[0], GlobalSearchScope.allScope(project));
                         if (psiClassChild == null) {
-                            return;
+                            return kv;
                         }
                         KV<String, Object> kv1 = getCollect(psiClassChild.getName(), remark, psiClassChild, project, pNames, childType, index + 1);
                         kv.set(name, kv1);
@@ -912,7 +916,7 @@ public class BuildJsonForYapi {
                         kv1.set(KV.by("type", NormalTypes.java2JsonType(psiClassChild.getName())));
                         kv.set(name, kv1);
                         kv1.set(KV.by("description", (Strings.isNullOrEmpty(remark) ? name : remark)));
-                        JsonObject example = NormalTypes.formatMockType(child, PsiAnnotationUtils.findPsiAnnotationParam(field, SwaggerConstants.API_MODEL_PROPERTY, "example"));
+                        JsonObject example = NormalTypes.formatMockType(child, swaggerExample);
                         kv1.set(KV.by("mock", example));
                     } else {
                         //class type
@@ -1016,6 +1020,7 @@ public class BuildJsonForYapi {
                 kv.set(name, kv1);
             }
         }
+        return kv;
     }
 
     /**
