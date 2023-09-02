@@ -108,7 +108,7 @@ public class BuildJsonForYapi {
         // 获取类上面的 RequestMapping 中的 value
         processRequestMapping(targetClass, path);
         // 获取 swagger 注解
-        String operation = PsiAnnotationSearchUtil.getPsiAnnotationValue(targetMethod, SwaggerConstants.API_OPERATION);
+        String operation = PsiAnnotationUtils.getPsiAnnotationValue(targetMethod, SwaggerConstants.API_OPERATION);
         if (StringUtils.isNotEmpty(operation)) {
             Notification info = notificationGroup.createNotification("apiOperation:" + operation, NotificationType.INFORMATION);
             Notifications.Bus.notify(info, project);
@@ -116,7 +116,7 @@ public class BuildJsonForYapi {
         }
         yapiApiDTO.setPath(path.toString());
         // 处理 Controller 类里的方法注解
-        PsiAnnotation mappingAnnotation = PsiAnnotationSearchUtil.findAnnotation(targetMethod, SpringMVCConstant.RequestMapping);
+        PsiAnnotation mappingAnnotation = PsiAnnotationUtils.findAnnotation(targetMethod, SpringMVCConstant.RequestMapping);
         if (mappingAnnotation != null) {
             processRequestMapping(mappingAnnotation, path, yapiApiDTO);
         } else if ((mappingAnnotation = getMappingAnnoFromMethod(targetMethod)) != null) {
@@ -294,23 +294,23 @@ public class BuildJsonForYapi {
 
     @Nullable
     private static PsiAnnotation getMappingAnnoFromMethod(PsiMethod targetMethod) {
-        PsiAnnotation annotation = PsiAnnotationSearchUtil.findAnnotation(targetMethod, SpringMVCConstant.GetMapping);
+        PsiAnnotation annotation = PsiAnnotationUtils.findAnnotation(targetMethod, SpringMVCConstant.GetMapping);
         if (annotation != null) {
             return annotation;
         }
-        annotation = PsiAnnotationSearchUtil.findAnnotation(targetMethod, SpringMVCConstant.PostMapping);
+        annotation = PsiAnnotationUtils.findAnnotation(targetMethod, SpringMVCConstant.PostMapping);
         if (annotation != null) {
             return annotation;
         }
-        annotation = PsiAnnotationSearchUtil.findAnnotation(targetMethod, SpringMVCConstant.PutMapping);
+        annotation = PsiAnnotationUtils.findAnnotation(targetMethod, SpringMVCConstant.PutMapping);
         if (annotation != null) {
             return annotation;
         }
-        annotation = PsiAnnotationSearchUtil.findAnnotation(targetMethod, SpringMVCConstant.DeleteMapping);
+        annotation = PsiAnnotationUtils.findAnnotation(targetMethod, SpringMVCConstant.DeleteMapping);
         if (annotation != null) {
             return annotation;
         }
-        return PsiAnnotationSearchUtil.findAnnotation(targetMethod, SpringMVCConstant.PatchMapping);
+        return PsiAnnotationUtils.findAnnotation(targetMethod, SpringMVCConstant.PatchMapping);
     }
 
     /**
@@ -345,7 +345,7 @@ public class BuildJsonForYapi {
     }
 
     private static void processRequestMapping(PsiClass selectedClass, StringBuilder path) {
-        PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(selectedClass, SpringMVCConstant.RequestMapping);
+        PsiAnnotation psiAnnotation = PsiAnnotationUtils.findAnnotation(selectedClass, SpringMVCConstant.RequestMapping);
         if (psiAnnotation == null) {
             return;
         }
@@ -366,11 +366,11 @@ public class BuildJsonForYapi {
 
     @Nullable
     private static String getApiValue(PsiClass selectedClass) {
-        String tags = PsiAnnotationSearchUtil.findPsiAnnotationParam(selectedClass, SwaggerConstants.API, "tags");
+        String tags = PsiAnnotationUtils.findPsiAnnotationParam(selectedClass, SwaggerConstants.API, "tags");
         if (StringUtils.isNotBlank(tags)) {
             return tags;
         } else {
-            tags = PsiAnnotationSearchUtil.getPsiAnnotationValue(selectedClass, SwaggerConstants.API);
+            tags = PsiAnnotationUtils.getPsiAnnotationValue(selectedClass, SwaggerConstants.API);
             if (StringUtils.isNotBlank(tags)) {
                 return tags;
             }
@@ -400,19 +400,19 @@ public class BuildJsonForYapi {
                 if (JavaConstant.HttpServletRequest.equals(paramObj) || JavaConstant.HttpServletResponse.equals(paramObj)) {
                     continue;
                 }
-                PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParameter, SpringMVCConstant.RequestBody);
+                PsiAnnotation psiAnnotation = PsiAnnotationUtils.findAnnotation(psiParameter, SpringMVCConstant.RequestBody);
                 if (psiAnnotation != null) {
                     yapiApiDTO.setRequestBody(getResponse(project, psiParameter.getType(), null));
                 } else {
-                    psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParameter, SpringMVCConstant.RequestParam);
+                    psiAnnotation = PsiAnnotationUtils.findAnnotation(psiParameter, SpringMVCConstant.RequestParam);
                     YapiHeaderDTO yapiHeaderDTO = null;
                     YapiPathVariableDTO yapiPathVariableDTO = null;
                     if (psiAnnotation == null) {
-                        psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParameter, SpringMVCConstant.RequestAttribute);
+                        psiAnnotation = PsiAnnotationUtils.findAnnotation(psiParameter, SpringMVCConstant.RequestAttribute);
                         if (psiAnnotation == null) {
-                            psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParameter, SpringMVCConstant.RequestHeader);
+                            psiAnnotation = PsiAnnotationUtils.findAnnotation(psiParameter, SpringMVCConstant.RequestHeader);
                             if (psiAnnotation == null) {
-                                psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParameter, SpringMVCConstant.PathVariable);
+                                psiAnnotation = PsiAnnotationUtils.findAnnotation(psiParameter, SpringMVCConstant.PathVariable);
                                 yapiPathVariableDTO = new YapiPathVariableDTO();
                             } else {
                                 yapiHeaderDTO = new YapiHeaderDTO();
@@ -526,7 +526,7 @@ public class BuildJsonForYapi {
                             if (Strings.isNullOrEmpty(yapiPathVariableDTO.getName())) {
                                 yapiPathVariableDTO.setName(psiParameter.getName());
                             }
-                            String desc = PsiAnnotationSearchUtil.getPsiAnnotationValue(psiParameter, SwaggerConstants.API_PARAM);
+                            String desc = PsiAnnotationUtils.getPsiAnnotationValue(psiParameter, SwaggerConstants.API_PARAM);
                             if (StringUtils.isNotEmpty(desc)) {
                                 yapiPathVariableDTO.setDesc(desc);
                             }
@@ -542,7 +542,7 @@ public class BuildJsonForYapi {
                             if (Strings.isNullOrEmpty(yapiQueryDTO.getName())) {
                                 yapiQueryDTO.setName(psiParameter.getName());
                             }
-                            String desc = PsiAnnotationSearchUtil.getPsiAnnotationValue(psiParameter, SwaggerConstants.API_PARAM);
+                            String desc = PsiAnnotationUtils.getPsiAnnotationValue(psiParameter, SwaggerConstants.API_PARAM);
                             if (StringUtils.isNotEmpty(desc)) {
                                 yapiQueryDTO.setDesc(desc);
                             }
@@ -628,7 +628,7 @@ public class BuildJsonForYapi {
      * @author chengsheng@qbb6.com
      * @since 2019/2/19
      */
-    private static String getResponse(Project project, PsiType psiType, String returnClass) throws RuntimeException {
+    public static String getResponse(Project project, PsiType psiType, String returnClass) throws RuntimeException {
         // 最外层的包装类只会有一个泛型对应接口返回值
         if (!Strings.isNullOrEmpty(returnClass) && !psiType.getCanonicalText().split("<")[0].equals(returnClass)) {
             PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(returnClass, GlobalSearchScope.allScope(project));
@@ -801,13 +801,13 @@ public class BuildJsonForYapi {
         if (psiClass != null) {
             if (Objects.nonNull(psiClass.getSuperClass()) && Objects.nonNull(NormalTypes.collectTypes.get(psiClass.getSuperClass().getName()))) {
                 for (PsiField field : psiClass.getFields()) {
-                    if (Objects.nonNull(PsiAnnotationSearchUtil.findAnnotation(field, JavaConstant.Deprecate))) {
+                    if (Objects.nonNull(PsiAnnotationUtils.findAnnotation(field, JavaConstant.Deprecate))) {
                         continue;
                     }
                     //如果是有notnull 和 notEmpty 注解就加入必填
-                    if (Objects.nonNull(PsiAnnotationSearchUtil.findAnnotation(field, JavaConstant.NotNull))
-                            || Objects.nonNull(PsiAnnotationSearchUtil.findAnnotation(field, JavaConstant.NotEmpty))
-                            || Objects.nonNull(PsiAnnotationSearchUtil.findAnnotation(field, JavaConstant.NotBlank))) {
+                    if (Objects.nonNull(PsiAnnotationUtils.findAnnotation(field, JavaConstant.NotNull))
+                            || Objects.nonNull(PsiAnnotationUtils.findAnnotation(field, JavaConstant.NotEmpty))
+                            || Objects.nonNull(PsiAnnotationUtils.findAnnotation(field, JavaConstant.NotBlank))) {
                         requiredList.add(field.getName());
                     }
                     Set<String> pNameList = new HashSet<>(pNames);
@@ -822,13 +822,13 @@ public class BuildJsonForYapi {
                     return getFields(psiClassChild, project, childType, index + 1, requiredList, pNames);
                 } else {
                     for (PsiField field : psiClass.getAllFields()) {
-                        if (Objects.nonNull(PsiAnnotationSearchUtil.findAnnotation(field, JavaConstant.Deprecate))) {
+                        if (Objects.nonNull(PsiAnnotationUtils.findAnnotation(field, JavaConstant.Deprecate))) {
                             continue;
                         }
                         //如果是有notnull 和 notEmpty 注解就加入必填
-                        if (Objects.nonNull(PsiAnnotationSearchUtil.findAnnotation(field, JavaConstant.NotNull))
-                                || Objects.nonNull(PsiAnnotationSearchUtil.findAnnotation(field, JavaConstant.NotEmpty))
-                                || Objects.nonNull(PsiAnnotationSearchUtil.findAnnotation(field, JavaConstant.NotBlank))) {
+                        if (Objects.nonNull(PsiAnnotationUtils.findAnnotation(field, JavaConstant.NotNull))
+                                || Objects.nonNull(PsiAnnotationUtils.findAnnotation(field, JavaConstant.NotEmpty))
+                                || Objects.nonNull(PsiAnnotationUtils.findAnnotation(field, JavaConstant.NotBlank))) {
                             requiredList.add(field.getName());
                         }
                         Set<String> pNameList = new HashSet<>(pNames);
@@ -856,7 +856,7 @@ public class BuildJsonForYapi {
         String name = field.getName();
         String remark = "";
         //swagger支持
-        remark = StringUtils.defaultIfEmpty(PsiAnnotationSearchUtil.getPsiAnnotationValue(field, SwaggerConstants.API_MODEL_PROPERTY), "");
+        remark = StringUtils.defaultIfEmpty(PsiAnnotationUtils.getPsiAnnotationValue(field, SwaggerConstants.API_MODEL_PROPERTY), "");
         if (field.getDocComment() != null) {
             if (Strings.isNullOrEmpty(remark)) {
                 remark = DesUtil.getFiledDesc(field.getDocComment());
@@ -875,7 +875,7 @@ public class BuildJsonForYapi {
                 jsonObject.addProperty("description", remark);
             }
             jsonObject.add("mock", NormalTypes.formatMockType(type.getPresentableText()
-                    , PsiAnnotationSearchUtil.findPsiAnnotationParam(field, SwaggerConstants.API_MODEL_PROPERTY, "example")));
+                    , PsiAnnotationUtils.findPsiAnnotationParam(field, SwaggerConstants.API_MODEL_PROPERTY, "example")));
             kv.set(name, jsonObject);
         } else {
             //reference Type
@@ -888,7 +888,7 @@ public class BuildJsonForYapi {
                     jsonObject.addProperty("description", remark);
                 }
                 jsonObject.add("mock", NormalTypes.formatMockType(type.getPresentableText()
-                        , PsiAnnotationSearchUtil.findPsiAnnotationParam(field, SwaggerConstants.API_MODEL_PROPERTY, "example")));
+                        , PsiAnnotationUtils.findPsiAnnotationParam(field, SwaggerConstants.API_MODEL_PROPERTY, "example")));
                 kv.set(name, jsonObject);
             } else if (!(type instanceof PsiArrayType) && ((PsiClassReferenceType) type).resolve().isEnum()) {
                 JsonObject jsonObject = new JsonObject();
@@ -927,7 +927,7 @@ public class BuildJsonForYapi {
                         kv.set(name, kv1);
                         kv1.set(KV.by("description", (Strings.isNullOrEmpty(remark) ? name : remark)));
                         kv1.set(KV.by("mock", NormalTypes.formatMockType(child
-                                , PsiAnnotationSearchUtil.findPsiAnnotationParam(field, SwaggerConstants.API_MODEL_PROPERTY, "example"))));
+                                , PsiAnnotationUtils.findPsiAnnotationParam(field, SwaggerConstants.API_MODEL_PROPERTY, "example"))));
                     } else {
                         //class type
                         KV<String, Object> kv1 = new KV<>();

@@ -13,7 +13,7 @@ import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
-public class PsiAnnotationSearchUtil {
+public class PsiAnnotationUtils {
     private static final Key<String> LOMBOK_ANNOTATION_FQN_KEY = Key.create("LOMBOK_ANNOTATION_FQN");
 
     @Nullable
@@ -206,7 +206,7 @@ public class PsiAnnotationSearchUtil {
      */
     @Nullable
     public static String findPsiAnnotationParam(PsiModifierListOwner psiParameter, String annotationName, String paramName) {
-        PsiAnnotation annotation = PsiAnnotationSearchUtil.findAnnotation(psiParameter, annotationName);
+        PsiAnnotation annotation = PsiAnnotationUtils.findAnnotation(psiParameter, annotationName);
         if (annotation == null) {
             return null;
         }
