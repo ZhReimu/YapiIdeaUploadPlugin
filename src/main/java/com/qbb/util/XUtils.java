@@ -2,8 +2,11 @@ package com.qbb.util;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.qbb.constant.YapiConstant;
+import com.qbb.dto.YapiCatMenuParam;
 import com.qbb.dto.YapiCatResponse;
 import com.qbb.dto.YapiResponse;
+import com.qbb.dto.YapiSaveParam;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -32,9 +35,20 @@ public class XUtils {
                 return chain.proceed(request);
             }).build();
 
+    /**
+     * 获取分类列表接口的响应 typeToken
+     */
     public static final TypeToken<YapiResponse<List<YapiCatResponse>>> YAPI_RESPONSE_CATS = new TypeToken<YapiResponse<List<YapiCatResponse>>>() {
     };
+    /**
+     * 新增分类接口的响应 typeToken
+     */
     public static final TypeToken<YapiResponse<YapiCatResponse>> YAPI_RESPONSE_CAT = new TypeToken<YapiResponse<YapiCatResponse>>() {
+    };
+    /**
+     * 不关心 data 内容的响应 typeToken
+     */
+    public static final TypeToken<YapiResponse<Object>> YAPI_RESPONSE = new TypeToken<YapiResponse<Object>>() {
     };
 
     /**
@@ -62,10 +76,62 @@ public class XUtils {
         };
     }
 
+    /**
+     * 调用 {@link YapiConstant#yapiSave} 接口保存接口数据
+     *
+     * @param saveParam 要保存的接口数据
+     * @return yapi 接口响应
+     */
+    @NotNull
+    public static YapiResponse<?> saveApi(YapiSaveParam saveParam) throws IOException {
+        return XUtils.doPost(saveParam.getYapiUrl() + YapiConstant.yapiSave, saveParam, YAPI_RESPONSE);
+    }
+
+    /**
+     * 调用 {@link YapiConstant#yapiCatMenu} 接口查询接口分类数据
+     *
+     * @param saveParam 查询入参
+     * @return yapi 接口响应
+     */
+    @NotNull
+    public static YapiResponse<List<YapiCatResponse>> getCatMenu(YapiSaveParam saveParam) throws IOException {
+        String url = saveParam.getYapiUrl() + YapiConstant.yapiCatMenu + "?project_id="
+                + saveParam.getProjectId() + "&token=" + saveParam.getToken();
+        return XUtils.doGet(url, YAPI_RESPONSE_CATS);
+    }
+
+    /**
+     * 调用 {@link YapiConstant#yapiAddCat} 接口新增接口分类数据
+     *
+     * @param saveParam 新增分类入参
+     * @return yapi 接口响应
+     */
+    @NotNull
+    public static YapiResponse<YapiCatResponse> addCat(YapiSaveParam saveParam, YapiCatMenuParam catMenuParam) throws IOException {
+        return XUtils.doPost(saveParam.getYapiUrl() + YapiConstant.yapiAddCat, catMenuParam, YAPI_RESPONSE_CAT);
+    }
+
+    /**
+     * 执行 get 请求并将返回值反序列化成指定对象
+     *
+     * @param url       请求 url
+     * @param typeToken 反序列化的 typeToken
+     * @param <T>       数据类型
+     * @return 反序列化后的对象
+     */
     public static <T> T doGet(String url, TypeToken<T> typeToken) throws IOException {
         return gson.fromJson(doGet(url), typeToken.getType());
     }
 
+    /**
+     * 执行 post 请求并将返回值反序列化成指定对象
+     *
+     * @param url       请求 url
+     * @param body      请求体
+     * @param typeToken 反序列化的 typeToken
+     * @param <T>       数据类型
+     * @return 反序列化后的对象
+     */
     public static <T> T doPost(String url, Object body, TypeToken<T> typeToken) throws IOException {
         return gson.fromJson(doPost(url, body), typeToken.getType());
     }

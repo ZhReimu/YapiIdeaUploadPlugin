@@ -12,9 +12,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import static com.qbb.util.XUtils.YAPI_RESPONSE_CAT;
-import static com.qbb.util.XUtils.YAPI_RESPONSE_CATS;
-
 /**
  * 上传到 yapi
  *
@@ -51,8 +48,7 @@ public class UploadYapi {
         // changeDesByPath(yapiSaveParam);
         YapiResponse<?> yapiResponse = getOrCreateCatId(yapiSaveParam);
         if (yapiResponse.getErrcode() == 0) {
-            String response = XUtils.doPost(yapiSaveParam.getYapiUrl() + YapiConstant.yapiSave, gson.toJson(yapiSaveParam));
-            YapiResponse<?> yapiResponseResult = gson.fromJson(response, YapiResponse.class);
+            YapiResponse<?> yapiResponseResult = XUtils.saveApi(yapiSaveParam);
             yapiResponseResult.setCatId(yapiSaveParam.getCatid());
             return yapiResponseResult;
         } else {
@@ -98,9 +94,7 @@ public class UploadYapi {
             yapiSaveParam.setMenu(YapiConstant.menu);
         }
         try {
-            String url = yapiSaveParam.getYapiUrl() + YapiConstant.yapiCatMenu + "?project_id="
-                    + yapiSaveParam.getProjectId() + "&token=" + yapiSaveParam.getToken();
-            YapiResponse<List<YapiCatResponse>> yapiResponse = XUtils.doGet(url, YAPI_RESPONSE_CATS);
+            YapiResponse<List<YapiCatResponse>> yapiResponse = XUtils.getCatMenu(yapiSaveParam);
             if (yapiResponse.getErrcode() == 0) {
                 List<YapiCatResponse> list = yapiResponse.getData();
                 String[] menus = yapiSaveParam.getMenu().split("/");
@@ -151,8 +145,7 @@ public class UploadYapi {
      */
     private static Integer addMenu(YapiSaveParam yapiSaveParam, Integer parent_id, String menu) throws IOException {
         YapiCatMenuParam yapiCatMenuParam = new YapiCatMenuParam(menu, yapiSaveParam.getProjectId(), yapiSaveParam.getToken(), parent_id);
-        String url = yapiSaveParam.getYapiUrl() + YapiConstant.yapiAddCat;
-        YapiResponse<YapiCatResponse> yapiCatResponse = XUtils.doPost(url, yapiCatMenuParam, YAPI_RESPONSE_CAT);
+        YapiResponse<YapiCatResponse> yapiCatResponse = XUtils.addCat(yapiSaveParam, yapiCatMenuParam);
         return yapiCatResponse.getData().get_id();
     }
 
