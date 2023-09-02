@@ -1,7 +1,6 @@
 package com.qbb.upload;
 
 import com.google.common.base.Strings;
-import com.google.gson.Gson;
 import com.qbb.constant.YapiConstant;
 import com.qbb.dto.*;
 import com.qbb.util.XUtils;
@@ -9,7 +8,6 @@ import com.qbb.util.XUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -20,14 +18,13 @@ import java.util.Optional;
  */
 public class UploadYapi {
 
-    private static final Gson gson = new Gson();
-
     /**
      * 调用保存接口
      *
      * @author chengsheng@qbb6.com
      * @since 2019/5/15
      */
+    @SuppressWarnings("unused")
     public static YapiResponse<?> uploadSave(YapiSaveParam yapiSaveParam, String attachUpload, String path) throws IOException {
         if (Strings.isNullOrEmpty(yapiSaveParam.getTitle())) {
             yapiSaveParam.setTitle(yapiSaveParam.getPath());
@@ -53,32 +50,6 @@ public class UploadYapi {
             return yapiResponseResult;
         } else {
             return yapiResponse;
-        }
-    }
-
-    /**
-     * 获得描述
-     *
-     * @author chengsheng@qbb6.com
-     * @since 2019/7/28
-     */
-    public static void changeDesByPath(YapiSaveParam yapiSaveParam) throws IOException {
-        String url = yapiSaveParam.getYapiUrl() + YapiConstant.yapiGetByPath + "?token=" + yapiSaveParam.getToken() + "&path=" + yapiSaveParam.getPath();
-        String response = XUtils.doGet(url);
-        YapiResponse<?> yapiResponse = gson.fromJson(response, YapiResponse.class);
-        if (yapiResponse.getErrcode() == 0) {
-            YapiInterfaceResponse yapiInterfaceResponse = gson.fromJson(gson.toJson(yapiResponse.getData()), YapiInterfaceResponse.class);
-            if (!Strings.isNullOrEmpty(yapiInterfaceResponse.getDesc())) {
-                //如果原来描述不为空，那么就将当前描述+上一个版本描述的自定义部分
-                if (yapiInterfaceResponse.getDesc().contains("java类")) {
-                    yapiSaveParam.setDesc(yapiInterfaceResponse.getDesc().substring(0, yapiInterfaceResponse.getDesc().indexOf("java类")) + yapiSaveParam.getDesc() + yapiInterfaceResponse.getDesc().substring(yapiInterfaceResponse.getDesc().indexOf("</pre>")));
-                } else {
-                    yapiSaveParam.setDesc(yapiInterfaceResponse.getDesc().substring(0, yapiInterfaceResponse.getDesc().indexOf("<pre>")) + yapiSaveParam.getDesc() + yapiInterfaceResponse.getDesc().substring(yapiInterfaceResponse.getDesc().indexOf("</pre>")));
-                }
-            }
-            if (Objects.nonNull(yapiInterfaceResponse.getCatid())) {
-                yapiSaveParam.setCatid(yapiInterfaceResponse.getCatid().toString());
-            }
         }
     }
 
