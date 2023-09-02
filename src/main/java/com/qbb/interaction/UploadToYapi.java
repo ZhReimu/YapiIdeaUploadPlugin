@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiFile;
 import com.qbb.component.ConfigPersistence;
 import com.qbb.dto.ConfigDTO;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -50,9 +51,7 @@ public class UploadToYapi extends AnAction {
         String projectType = configDTO.getProjectType();
         // 判断项目类型
         String url = ApiUploadersEnum.ofType(projectType).uploadToYapi(event, configDTO);
-        if (url != null) {
-            setClipboard(url);
-        }
+        setClipboard(url);
     }
 
     /**
@@ -76,7 +75,10 @@ public class UploadToYapi extends AnAction {
      * @author chengsheng@qbb6.com
      * @since 2019/7/3
      */
-    private void setClipboard(String content) {
+    private void setClipboard(@Nullable String content) {
+        if (content == null) {
+            return;
+        }
         //获取系统剪切板
         Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         //构建String数据类型

@@ -7,10 +7,12 @@ import com.qbb.builder.BuildJsonForYapi;
 import com.qbb.constant.ProjectTypeConstant;
 import com.qbb.dto.*;
 import com.qbb.upload.UploadYapi;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 上传策略枚举类
@@ -18,12 +20,14 @@ import java.util.Set;
 public enum ApiUploadersEnum {
 
     DUBBO(ProjectTypeConstant.dubbo) {
+        @Nullable
         @Override
         public String uploadToYapi(AnActionEvent event, ConfigDTO config) {
             return uploadForDubbo(event, config);
         }
     },
     API(ProjectTypeConstant.api) {
+        @Nullable
         @Override
         public String uploadToYapi(AnActionEvent event, ConfigDTO config) {
             return uploadForApi(event, config);
@@ -36,38 +40,37 @@ public enum ApiUploadersEnum {
         this.type = type;
     }
 
+    @Nullable
     public abstract String uploadToYapi(AnActionEvent event, ConfigDTO config);
 
     public static ApiUploadersEnum ofType(String type) {
         return handlers.stream().filter(it -> it.type.equals(type)).findFirst().orElseThrow(IllegalArgumentException::new);
     }
 
+    @Nullable
     private static String uploadForDubbo(AnActionEvent event, ConfigDTO config) {
         // 获得dubbo需上传的接口列表 参数对象
         List<YapiDubboDTO> yapiDubboDTOs = BuildJsonForDubbo.actionPerformedList(event);
         String yapiUrl = config.getYapiUrl();
         String projectToken = config.getProjectToken();
         String projectId = config.getProjectId();
-        if (yapiDubboDTOs != null) {
-            for (YapiDubboDTO yapiDubboDTO : yapiDubboDTOs) {
-                YapiSaveParam yapiSaveParam = YapiSaveParam.ofDubbo(yapiDubboDTO, projectToken, projectId, yapiUrl);
-                return upload(yapiSaveParam, config);
-            }
-        }
-        return null;
+        List<String> docUrls = yapiDubboDTOs.stream()
+                .map(it -> upload(YapiSaveParam.ofDubbo(it, projectToken, projectId, yapiUrl), config))
+                .collect(Collectors.toList());
+        return docUrls.get(0);
     }
 
+    @Nullable
     private static String uploadForApi(AnActionEvent event, ConfigDTO config) {
         String yapiUrl = config.getYapiUrl();
         String projectToken = config.getProjectToken();
         String projectId = config.getProjectId();
-        //获得api 需上传的接口列表 参数对象
+        // 获得 api 需上传的接口列表 参数对象
         List<YapiApiDTO> yapiApiDTOS = BuildJsonForYapi.actionPerformedList(event, null, null);
-        for (YapiApiDTO yapiApiDTO : yapiApiDTOS) {
-            YapiSaveParam yapiSaveParam = YapiSaveParam.ofApi(yapiApiDTO, projectToken, projectId, yapiUrl);
-            return upload(yapiSaveParam, config);
-        }
-        return null;
+        List<String> docUrls = yapiApiDTOS.stream()
+                .map(it -> upload(YapiSaveParam.ofApi(it, projectToken, projectId, yapiUrl), config))
+                .collect(Collectors.toList());
+        return docUrls.get(0);
     }
 
     private static String upload(YapiSaveParam yapiSaveParam, ConfigDTO config) {

@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiJavaFileImpl;
@@ -17,6 +18,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.qbb.dto.YapiDubboDTO;
 import com.qbb.util.DesUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -139,18 +141,27 @@ public class BuildJsonForDubbo {
      * @author chengsheng@qbb6.com
      * @since 2019/2/19
      */
-    public static ArrayList<YapiDubboDTO> actionPerformedList(AnActionEvent e) {
-        Editor editor = e.getDataContext().getData(CommonDataKeys.EDITOR);
-        PsiFile psiFile = e.getDataContext().getData(CommonDataKeys.PSI_FILE);
-        String selectedText = e.getRequiredData(CommonDataKeys.EDITOR).getSelectionModel().getSelectedText();
+    @SuppressWarnings("DialogTitleCapitalization")
+    @NotNull
+    public static List<YapiDubboDTO> actionPerformedList(AnActionEvent event) {
+        Editor editor = event.getDataContext().getData(CommonDataKeys.EDITOR);
+        PsiFile psiFile = event.getDataContext().getData(CommonDataKeys.PSI_FILE);
+        if (editor == null || psiFile == null) {
+            return Collections.emptyList();
+        }
+        String selectedText = event.getRequiredData(CommonDataKeys.EDITOR).getSelectionModel().getSelectedText();
         Project project = editor.getProject();
         if (Strings.isNullOrEmpty(selectedText)) {
             Notification error = notificationGroup.createNotification("please select method or class", NotificationType.ERROR);
             Notifications.Bus.notify(error, project);
-            return null;
+            return Collections.emptyList();
         }
         PsiElement referenceAt = psiFile.findElementAt(editor.getCaretModel().getOffset());
-        PsiClass selectedClass = (PsiClass) PsiTreeUtil.getContextOfType(referenceAt, new Class[]{PsiClass.class});
+        PsiClass selectedClass = PsiTreeUtil.getContextOfType(referenceAt, PsiClass.class);
+        if (selectedClass == null) {
+            Messages.showErrorDialog("请使用光标选中一个类", "错误");
+            return Collections.emptyList();
+        }
         String classMenu = null;
         if (Objects.nonNull(selectedClass.getDocComment())) {
             classMenu = DesUtil.getMenu(selectedClass.getText());
