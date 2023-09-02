@@ -50,7 +50,7 @@ public class UploadToYapi extends AnAction {
         final ConfigDTO configDTO = collect.get(0);
         String projectType = configDTO.getProjectType();
         // 判断项目类型
-        String url = ApiUploadersEnum.ofType(projectType).uploadToYapi(event, configDTO);
+        String url = ApiUplooadStrategyEnum.ofType(projectType).uploadToYapi(event, configDTO);
         setClipboard(url);
     }
 

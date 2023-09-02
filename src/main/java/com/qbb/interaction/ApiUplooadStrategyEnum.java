@@ -18,15 +18,15 @@ import java.util.stream.Collectors;
 /**
  * 上传策略枚举类
  */
-public enum ApiUploadersEnum {
+public enum ApiUplooadStrategyEnum {
 
-    DUBBO(ProjectTypeConstant.dubbo, ApiUploadersEnum::uploadForDubbo),
-    API(ProjectTypeConstant.api, ApiUploadersEnum::uploadForApi);
+    DUBBO(ProjectTypeConstant.dubbo, ApiUplooadStrategyEnum::uploadForDubbo),
+    API(ProjectTypeConstant.api, ApiUplooadStrategyEnum::uploadForApi);
     private final String type;
     private final BiFunction<AnActionEvent, ConfigDTO, String> uploadFunction;
-    private static final Set<ApiUploadersEnum> handlers = EnumSet.allOf(ApiUploadersEnum.class);
+    private static final Set<ApiUplooadStrategyEnum> handlers = EnumSet.allOf(ApiUplooadStrategyEnum.class);
 
-    ApiUploadersEnum(String type, BiFunction<AnActionEvent, ConfigDTO, String> uploadFunction) {
+    ApiUplooadStrategyEnum(String type, BiFunction<AnActionEvent, ConfigDTO, String> uploadFunction) {
         this.type = type;
         this.uploadFunction = uploadFunction;
     }
@@ -38,7 +38,7 @@ public enum ApiUploadersEnum {
         return url;
     }
 
-    public static ApiUploadersEnum ofType(String type) {
+    public static ApiUplooadStrategyEnum ofType(String type) {
         return handlers.stream().filter(it -> it.type.equals(type)).findFirst().orElseThrow(IllegalArgumentException::new);
     }
 
