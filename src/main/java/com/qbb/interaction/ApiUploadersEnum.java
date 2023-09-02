@@ -63,11 +63,9 @@ public enum ApiUploadersEnum {
         String projectId = config.getProjectId();
         //获得api 需上传的接口列表 参数对象
         List<YapiApiDTO> yapiApiDTOS = BuildJsonForYapi.actionPerformedList(event, null, null);
-        if (yapiApiDTOS != null) {
-            for (YapiApiDTO yapiApiDTO : yapiApiDTOS) {
-                YapiSaveParam yapiSaveParam = YapiSaveParam.ofApi(yapiApiDTO, projectToken, projectId, yapiUrl);
-                return upload(yapiSaveParam, config);
-            }
+        for (YapiApiDTO yapiApiDTO : yapiApiDTOS) {
+            YapiSaveParam yapiSaveParam = YapiSaveParam.ofApi(yapiApiDTO, projectToken, projectId, yapiUrl);
+            return upload(yapiSaveParam, config);
         }
         return null;
     }

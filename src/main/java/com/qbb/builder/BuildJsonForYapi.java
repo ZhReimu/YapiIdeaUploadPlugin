@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -24,6 +25,7 @@ import com.qbb.dto.YapiPathVariableDTO;
 import com.qbb.dto.YapiQueryDTO;
 import com.qbb.util.*;
 import org.apache.commons.lang.StringUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,7 +50,7 @@ public class BuildJsonForYapi {
 
     public static YapiApiDTO actionPerformed(
             PsiClass selectedClass, PsiMethod psiMethodTarget, Project project,
-            PsiFile psiFile, String attachUpload, String returnClass
+            String attachUpload, String returnClass
     ) {
         YapiApiDTO yapiApiDTO = new YapiApiDTO();
         // 获得路径
@@ -190,13 +192,13 @@ public class BuildJsonForYapi {
             // 生成响应参数
             yapiApiDTO.setResponse(getResponse(project, psiMethodTarget.getReturnType(), returnClass));
             Set<String> codeSet = new HashSet<>();
-            Long time = System.currentTimeMillis();
+            long time = System.currentTimeMillis();
             String responseFileName = "/response_" + time + ".zip";
             String requestFileName = "/request_" + time + ".zip";
             String codeFileName = "/code_" + time + ".zip";
             if (!Strings.isNullOrEmpty(attachUpload)) {
                 // 打包响应参数文件
-                if (filePaths.size() > 0) {
+                if (!filePaths.isEmpty()) {
                     changeFilePath(project);
                     FileToZipUtil.toZip(filePaths, project.getBasePath() + responseFileName, true);
                     filePaths.clear();
@@ -209,14 +211,14 @@ public class BuildJsonForYapi {
             }
             getRequest(project, yapiApiDTO, psiMethodTarget);
             if (!Strings.isNullOrEmpty(attachUpload)) {
-                if (filePaths.size() > 0) {
+                if (!filePaths.isEmpty()) {
                     changeFilePath(project);
                     FileToZipUtil.toZip(filePaths, project.getBasePath() + requestFileName, true);
                     filePaths.clear();
                     codeSet.add(project.getBasePath() + requestFileName);
                 }
                 // 打包请求参数文件
-                if (codeSet.size() > 0) {
+                if (!codeSet.isEmpty()) {
                     FileToZipUtil.toZip(codeSet, project.getBasePath() + codeFileName, true);
                     if (!Strings.isNullOrEmpty(attachUpload)) {
                         String fileUrl = XUtils.uploadFile(attachUpload, project.getBasePath() + codeFileName);
@@ -1057,66 +1059,69 @@ public class BuildJsonForYapi {
     /**
      * 批量生成 接口数据
      */
-    public static List<YapiApiDTO> actionPerformedList(AnActionEvent e, String attachUpload, String returnClass) {
-        Editor editor = e.getDataContext().getData(CommonDataKeys.EDITOR);
-        PsiFile psiFile = e.getDataContext().getData(CommonDataKeys.PSI_FILE);
+    @NotNull
+    @SuppressWarnings("DialogTitleCapitalization")
+    public static List<YapiApiDTO> actionPerformedList(AnActionEvent event, String attachUpload, String returnClass) {
+        Editor editor = event.getDataContext().getData(CommonDataKeys.EDITOR);
+        PsiFile psiFile = event.getDataContext().getData(CommonDataKeys.PSI_FILE);
         if (editor == null || psiFile == null) {
             return Collections.emptyList();
         }
-        String selectedText = e.getRequiredData(CommonDataKeys.EDITOR).getSelectionModel().getSelectedText();
+        String selectedText = event.getRequiredData(CommonDataKeys.EDITOR).getSelectionModel().getSelectedText();
         Project project = editor.getProject();
         PsiElement referenceAt = psiFile.findElementAt(editor.getCaretModel().getOffset());
-        PsiClass selectedClass = (PsiClass) PsiTreeUtil.getContextOfType(referenceAt, new Class[]{PsiClass.class});
+        PsiClass selectedClass = PsiTreeUtil.getContextOfType(referenceAt, PsiClass.class);
+        if (selectedClass == null) {
+            Messages.showErrorDialog("请使用光标选中一个类", "错误");
+            return Collections.emptyList();
+        }
+        String classMenu = getClassMenu(selectedClass);
+        if (Strings.isNullOrEmpty(selectedText) || selectedText.equals(selectedClass.getName())) {
+            // 获取类下所有方法, 去除私有方法
+            List<YapiApiDTO> yapiApiDTOList = Arrays.stream(selectedClass.getMethods())
+                    .filter(it -> !it.getModifierList().hasModifierProperty(PsiModifier.PRIVATE) && it.getReturnType() != null)
+                    .map(it -> actionPerformed(selectedClass, it, project, attachUpload, returnClass))
+                    .filter(Objects::nonNull).collect(Collectors.toList());
+            for (YapiApiDTO yapiApi : yapiApiDTOList) {
+                if (yapiApi.getMenu() == null) {
+                    yapiApi.setMenu(classMenu);
+                }
+            }
+            return yapiApiDTOList;
+        } else {
+            // 寻找目标方法
+            List<YapiApiDTO> yapiApiDTOList = Arrays.stream(selectedClass.getAllMethods()).filter(it -> it.getName().equals(selectedText))
+                    .map(it -> actionPerformed(selectedClass, it, project, attachUpload, returnClass))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            if (yapiApiDTOList.isEmpty()) {
+                Notification error = notificationGroup.createNotification("can not find method:" + selectedText, NotificationType.ERROR);
+                Notifications.Bus.notify(error, project);
+                return Collections.emptyList();
+            }
+            YapiApiDTO yapiApiDTO = yapiApiDTOList.get(0);
+            if (yapiApiDTO.getMenu() == null) {
+                yapiApiDTO.setMenu(classMenu);
+            }
+            return yapiApiDTOList;
+        }
+    }
+
+    @NotNull
+    private static String getClassMenu(PsiClass selectedClass) {
         String classMenu = null;
-        if (Objects.nonNull(selectedClass.getContext())) {
-            classMenu = DesUtil.getMenu(selectedClass.getContext().getText().replace(selectedClass.getText(), ""));
+        PsiElement context = selectedClass.getContext();
+        String text = selectedClass.getText();
+        if (Objects.nonNull(context)) {
+            classMenu = DesUtil.getMenu(context.getText().replace(text, ""));
         }
         if (Objects.nonNull(selectedClass.getDocComment())) {
-            classMenu = DesUtil.getMenu(selectedClass.getText());
+            classMenu = DesUtil.getMenu(text);
         }
         if (StringUtils.isEmpty(classMenu)) {
             classMenu = DesUtil.camelToLine(selectedClass.getName(), null);
         }
-        ArrayList<YapiApiDTO> yapiApiDTOS = new ArrayList<>();
-        if (Strings.isNullOrEmpty(selectedText) || selectedText.equals(selectedClass.getName())) {
-            PsiMethod[] psiMethods = selectedClass.getMethods();
-            for (PsiMethod psiMethodTarget : psiMethods) {
-                //去除私有方法
-                if (!psiMethodTarget.getModifierList().hasModifierProperty(PsiModifier.PRIVATE) && Objects.nonNull(psiMethodTarget.getReturnType())) {
-                    YapiApiDTO yapiApiDTO = actionPerformed(selectedClass, psiMethodTarget, project, psiFile, attachUpload, returnClass);
-                    if (Objects.nonNull(yapiApiDTO)) {
-                        if (Objects.isNull(yapiApiDTO.getMenu())) {
-                            yapiApiDTO.setMenu(classMenu);
-                        }
-                        yapiApiDTOS.add(yapiApiDTO);
-                    }
-                }
-            }
-        } else {
-            PsiMethod[] psiMethods = selectedClass.getAllMethods();
-            //寻找目标Method
-            PsiMethod psiMethodTarget = null;
-            for (PsiMethod psiMethod : psiMethods) {
-                if (psiMethod.getName().equals(selectedText)) {
-                    psiMethodTarget = psiMethod;
-                    break;
-                }
-            }
-            if (Objects.nonNull(psiMethodTarget)) {
-                YapiApiDTO yapiApiDTO = actionPerformed(selectedClass, psiMethodTarget, project, psiFile, attachUpload, returnClass);
-                if (Objects.nonNull(yapiApiDTO)) {
-                    if (Objects.isNull(yapiApiDTO.getMenu())) {
-                        yapiApiDTO.setMenu(classMenu);
-                    }
-                    yapiApiDTOS.add(yapiApiDTO);
-                }
-            } else {
-                Notification error = notificationGroup.createNotification("can not find method:" + selectedText, NotificationType.ERROR);
-                Notifications.Bus.notify(error, project);
-                return null;
-            }
-        }
-        return yapiApiDTOS;
+        return classMenu;
     }
 
 }
