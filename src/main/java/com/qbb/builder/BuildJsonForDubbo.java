@@ -232,14 +232,16 @@ public class BuildJsonForDubbo {
                     kvClass.set(psiParameter.getType().getCanonicalText(), NormalTypes.getNormalType(typeName));
                     list.add(kvClass);
                 } else if (typeName.startsWith("List")) {
-                    ArrayList listChild = new ArrayList<>();
+                    List<Object> listChild = new ArrayList<>();
                     String[] types = psiParameter.getType().getCanonicalText().split("<");
                     if (types.length > 1) {
                         String childPackage = types[1].split(">")[0];
-                        if (NormalTypes.noramlTypesPackages.containsKey(childPackage)) {
-                            listChild.add(NormalTypes.noramlTypesPackages.get(childPackage));
-                        } else if (NormalTypes.collectTypesPackages.containsKey(childPackage)) {
-                            listChild.add(NormalTypes.collectTypesPackages.get(childPackage));
+                        String normalType = NormalTypes.getNormalType(childPackage);
+                        String collectionType = NormalTypes.getCollectionType(childPackage);
+                        if (normalType != null) {
+                            listChild.add(normalType);
+                        } else if (collectionType != null) {
+                            listChild.add(collectionType);
                         } else {
                             PsiClass psiClassChild = JavaPsiFacade.getInstance(project).findClass(childPackage, GlobalSearchScope.allScope(project));
                             KV kvObject = getFields(psiClassChild, project);
@@ -250,20 +252,21 @@ public class BuildJsonForDubbo {
                     kvClass.set(types[0], listChild);
                     list.add(kvClass);
                 } else if (typeName.startsWith("Set")) {
-                    HashSet setChild = new HashSet();
+                    HashSet<Object> setChild = new HashSet<>();
                     String[] types = psiParameter.getType().getCanonicalText().split("<");
                     if (types.length > 1) {
                         String childPackage = types[1].split(">")[0];
-                        if (NormalTypes.noramlTypesPackages.containsKey(childPackage)) {
-                            setChild.add(NormalTypes.noramlTypesPackages.get(childPackage));
-                        } else if (NormalTypes.collectTypesPackages.containsKey(childPackage)) {
-                            setChild.add(NormalTypes.collectTypesPackages.get(childPackage));
+                        String normalType = NormalTypes.getNormalType(childPackage);
+                        String collectionType = NormalTypes.getCollectionType(childPackage);
+                        if (normalType != null) {
+                            setChild.add(normalType);
+                        } else if (collectionType != null) {
+                            setChild.add(collectionType);
                         } else {
                             PsiClass psiClassChild = JavaPsiFacade.getInstance(project).findClass(childPackage, GlobalSearchScope.allScope(project));
                             KV kvObject = getFields(psiClassChild, project);
                             setChild.add(kvObject);
                         }
-
                     }
                     KV kvClass = KV.create();
                     kvClass.set(types[0], setChild);

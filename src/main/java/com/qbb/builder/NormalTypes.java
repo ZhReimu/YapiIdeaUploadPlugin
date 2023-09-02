@@ -2,10 +2,9 @@ package com.qbb.builder;
 
 import com.google.gson.JsonObject;
 import org.apache.commons.lang.StringUtils;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -17,21 +16,19 @@ import java.util.*;
  */
 public class NormalTypes {
 
-    @NonNls
     private static final Map<String, String> normalTypes = new HashMap<>();
 
-    public static final Map<String, Object> noramlTypesPackages = new HashMap<>();
+    private static final Map<String, String> normalTypePackages = new HashMap<>();
 
-    public static final Map<String, Object> collectTypes = new HashMap<>();
+    private static final Map<String, String> collectionTypes = new HashMap<>();
 
-    public static final Map<String, Object> collectTypesPackages = new HashMap<>();
+    private static final Map<String, String> collectionTypePackages = new HashMap<>();
 
-    public static final Map<String, String> java2JsonTypes = new HashMap<>();
+    private static final Map<String, String> java2JsonTypes = new HashMap<>();
     /**
      * 泛型列表
      */
     public static final List<String> genericList = new ArrayList<>();
-
 
     static {
         normalTypes.put("int", "1");
@@ -56,9 +53,10 @@ public class NormalTypes {
         normalTypes.put("LocalTime", new SimpleDateFormat("HH:mm:ss").format(new Date()));
         normalTypes.put("LocalDateTime", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
         normalTypes.put("Timestamp", String.valueOf(System.currentTimeMillis()));
-        collectTypes.put("HashMap", "HashMap");
-        collectTypes.put("Map", "Map");
-        collectTypes.put("LinkedHashMap", "LinkedHashMap");
+
+        collectionTypes.put("HashMap", "HashMap");
+        collectionTypes.put("Map", "Map");
+        collectionTypes.put("LinkedHashMap", "LinkedHashMap");
 
         genericList.add("T");
         genericList.add("E");
@@ -90,41 +88,55 @@ public class NormalTypes {
     }
 
     static {
-        noramlTypesPackages.put("int", 1);
-        noramlTypesPackages.put("boolean", true);
-        noramlTypesPackages.put("byte", 1);
-        noramlTypesPackages.put("short", 1);
-        noramlTypesPackages.put("long", 1L);
-        noramlTypesPackages.put("float", 1.0F);
-        noramlTypesPackages.put("double", 1.0D);
-        noramlTypesPackages.put("char", 'a');
-        noramlTypesPackages.put("java.lang.Boolean", false);
-        noramlTypesPackages.put("java.lang.Byte", 0);
-        noramlTypesPackages.put("java.lang.Short", (short) 0);
-        noramlTypesPackages.put("java.lang.Integer", 1);
-        noramlTypesPackages.put("java.lang.Long", 1L);
-        noramlTypesPackages.put("java.lang.Float", 1L);
-        noramlTypesPackages.put("java.lang.Double", 1.0D);
-        noramlTypesPackages.put("java.sql.Timestamp", new Timestamp(System.currentTimeMillis()));
-        noramlTypesPackages.put("java.util.Date", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-        noramlTypesPackages.put("java.lang.String", "String");
-        noramlTypesPackages.put("java.math.BigDecimal", 1);
-        noramlTypesPackages.put("java.time.LocalDate", new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
-        noramlTypesPackages.put("java.time.LocalTime", new SimpleDateFormat("HH:mm:ss").format(new Date()));
-        noramlTypesPackages.put("java.time.LocalDateTime", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+        normalTypePackages.put("int", "1");
+        normalTypePackages.put("boolean", "true");
+        normalTypePackages.put("byte", "1");
+        normalTypePackages.put("short", "1");
+        normalTypePackages.put("long", "1");
+        normalTypePackages.put("float", "1.0");
+        normalTypePackages.put("double", "1.0");
+        normalTypePackages.put("char", "a");
+        normalTypePackages.put("java.lang.Boolean", "false");
+        normalTypePackages.put("java.lang.Byte", "0");
+        normalTypePackages.put("java.lang.Short", "0");
+        normalTypePackages.put("java.lang.Integer", "1");
+        normalTypePackages.put("java.lang.Long", "1");
+        normalTypePackages.put("java.lang.Float", "1");
+        normalTypePackages.put("java.lang.Double", "1.0");
+        normalTypePackages.put("java.sql.Timestamp", String.valueOf(System.currentTimeMillis()));
+        normalTypePackages.put("java.util.Date", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+        normalTypePackages.put("java.lang.String", "String");
+        normalTypePackages.put("java.math.BigDecimal", "1");
+        normalTypePackages.put("java.time.LocalDate", new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
+        normalTypePackages.put("java.time.LocalTime", new SimpleDateFormat("HH:mm:ss").format(new Date()));
+        normalTypePackages.put("java.time.LocalDateTime", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
 
-        collectTypesPackages.put("java.util.LinkedHashMap", "LinkedHashMap");
-        collectTypesPackages.put("java.util.HashMap", "HashMap");
-        collectTypesPackages.put("java.util.Map", "Map");
+        collectionTypePackages.put("java.util.LinkedHashMap", "LinkedHashMap");
+        collectionTypePackages.put("java.util.HashMap", "HashMap");
+        collectionTypePackages.put("java.util.Map", "Map");
     }
 
     public static boolean isNormalType(String typeName) {
-        return normalTypes.containsKey(typeName);
+        return normalTypes.containsKey(typeName) || normalTypePackages.containsKey(typeName);
     }
 
     @Nullable
     public static String getNormalType(String typeName) {
-        return normalTypes.get(typeName);
+        return normalTypes.getOrDefault(typeName, normalTypePackages.get(typeName));
+    }
+
+    public static boolean isCollectionType(String typeName) {
+        return collectionTypes.containsKey(typeName) || collectionTypePackages.containsKey(typeName);
+    }
+
+    @Nullable
+    public static String getCollectionType(String typeName) {
+        return collectionTypes.getOrDefault(typeName, collectionTypePackages.get(typeName));
+    }
+
+    @NotNull
+    public static String java2JsonType(String typeName) {
+        return java2JsonTypes.getOrDefault(typeName, typeName);
     }
 
     /**
