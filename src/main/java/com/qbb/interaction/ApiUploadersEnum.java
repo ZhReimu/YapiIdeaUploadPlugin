@@ -83,8 +83,8 @@ public enum ApiUploadersEnum {
                 Messages.showInfoMessage("上传成功！接口文档url地址:  " + url, "上传成功！");
                 return url;
             }
-        } catch (Exception e1) {
-            Messages.showErrorDialog("上传失败！异常:  " + e1, "上传失败！");
+        } catch (Exception e) {
+            Messages.showErrorDialog("上传失败！异常:  " + e, "上传失败！");
         }
         return null;
     }

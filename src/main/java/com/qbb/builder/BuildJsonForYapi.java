@@ -275,20 +275,21 @@ public class BuildJsonForYapi {
     }
 
     /**
-     * @description: 获得请求参数
-     * @param: [project, yapiApiDTO, psiMethodTarget]
-     * @return: void
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/2/19
+     * 获得请求参数
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/2/19
      */
     public static void getRequest(Project project, YapiApiDTO yapiApiDTO, PsiMethod psiMethodTarget) throws RuntimeException {
         PsiParameter[] psiParameters = psiMethodTarget.getParameterList().getParameters();
         if (psiParameters.length > 0) {
-            ArrayList yapiParamList = new ArrayList<YapiQueryDTO>();
+            List<YapiQueryDTO> yapiParamList = new ArrayList<>();
             List<YapiHeaderDTO> yapiHeaderDTOList = new ArrayList<>();
             List<YapiPathVariableDTO> yapiPathVariableDTOList = new ArrayList<>();
             for (PsiParameter psiParameter : psiParameters) {
-                if (JavaConstant.HttpServletRequest.equals(psiParameter.getType().getCanonicalText()) || JavaConstant.HttpServletResponse.equals(psiParameter.getType().getCanonicalText())) {
+                if (JavaConstant.HttpServletRequest.equals(psiParameter.getType().getCanonicalText())
+                        || JavaConstant.HttpServletResponse.equals(psiParameter.getType().getCanonicalText())
+                ) {
                     continue;
                 }
                 PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiParameter, SpringMVCConstant.RequestBody);
@@ -316,21 +317,27 @@ public class BuildJsonForYapi {
 
                         if (psiNameValuePairs.length > 0) {
                             for (PsiNameValuePair psiNameValuePair : psiNameValuePairs) {
-                                if ("name".equals(psiNameValuePair.getName()) || "value".equals(psiNameValuePair.getName())) {
+                                String name = psiNameValuePair.getName();
+                                PsiAnnotationMemberValue value = psiNameValuePair.getValue();
+                                if (value == null) {
+                                    continue;
+                                }
+                                if ("name".equals(name) || "value".equals(name)) {
                                     if (yapiHeaderDTO != null) {
-                                        yapiHeaderDTO.setName(psiNameValuePair.getValue().getText().replace("\"", ""));
+                                        yapiHeaderDTO.setName(value.getText().replace("\"", ""));
                                     } else if (yapiPathVariableDTO != null) {
-                                        yapiPathVariableDTO.setName(psiNameValuePair.getValue().getText().replace("\"", ""));
+                                        yapiPathVariableDTO.setName(value.getText().replace("\"", ""));
                                     } else {
-                                        yapiQueryDTO.setName(psiNameValuePair.getValue().getText().replace("\"", ""));
+                                        yapiQueryDTO.setName(value.getText().replace("\"", ""));
                                     }
-                                } else if ("required".equals(psiNameValuePair.getName())) {
-                                    yapiQueryDTO.setRequired(psiNameValuePair.getValue().getText().replace("\"", "").replace("false", "0").replace("true", "1"));
-                                } else if ("defaultValue".equals(psiNameValuePair.getName())) {
+                                } else if ("required".equals(name)) {
+                                    yapiQueryDTO.setRequired(value.getText().replace("\"", "")
+                                            .replace("false", "0").replace("true", "1"));
+                                } else if ("defaultValue".equals(name)) {
                                     if (yapiHeaderDTO != null) {
-                                        yapiHeaderDTO.setExample(psiNameValuePair.getValue().getText().replace("\"", ""));
+                                        yapiHeaderDTO.setExample(value.getText().replace("\"", ""));
                                     } else {
-                                        yapiQueryDTO.setExample(psiNameValuePair.getValue().getText().replace("\"", ""));
+                                        yapiQueryDTO.setExample(value.getText().replace("\"", ""));
                                     }
                                 } else {
                                     if (yapiHeaderDTO != null) {
@@ -462,11 +469,10 @@ public class BuildJsonForYapi {
     }
 
     /**
-     * @description: 获得表单提交数据对象
-     * @param: [requestClass]
-     * @return: java.util.List<java.util.Map < java.lang.String, java.lang.String>>
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/5/17
+     * 获得表单提交数据对象
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/5/17
      */
     public static List<Map<String, String>> getRequestForm(Project project, PsiParameter psiParameter, PsiMethod psiMethodTarget) {
         List<Map<String, String>> requestForm = new ArrayList<>();
@@ -479,9 +485,14 @@ public class BuildJsonForYapi {
             map.put("example", NormalTypes.normalTypes.get(psiParameter.getType().getPresentableText()).toString());
             requestForm.add(map);
         } else {
-            PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(psiParameter.getType().getCanonicalText(), GlobalSearchScope.allScope(project));
+            PsiClass psiClass = JavaPsiFacade.getInstance(project)
+                    .findClass(psiParameter.getType().getCanonicalText(), GlobalSearchScope.allScope(project));
+            if (psiClass == null) {
+                return Collections.emptyList();
+            }
             for (PsiField field : psiClass.getAllFields()) {
-                if (field.getModifierList().hasModifierProperty("final")) {
+                PsiModifierList modifierList = field.getModifierList();
+                if (modifierList == null || modifierList.hasModifierProperty(PsiModifier.FINAL)) {
                     continue;
                 }
                 Map<String, String> map = new HashMap<>();
@@ -490,11 +501,10 @@ public class BuildJsonForYapi {
                 String remark = DesUtil.getFiledDesc(field.getDocComment());
                 remark = DesUtil.getLinkRemark(remark, project, field);
                 map.put("desc", remark);
-                if (Objects.nonNull(field.getType().getPresentableText())) {
-                    Object obj = NormalTypes.normalTypes.get(field.getType().getPresentableText());
-                    if (Objects.nonNull(obj)) {
-                        map.put("example", NormalTypes.normalTypes.get(field.getType().getPresentableText()).toString());
-                    }
+                field.getType().getPresentableText();
+                Object obj = NormalTypes.normalTypes.get(field.getType().getPresentableText());
+                if (Objects.nonNull(obj)) {
+                    map.put("example", NormalTypes.normalTypes.get(field.getType().getPresentableText()).toString());
                 }
                 getFilePath(project, filePaths, DesUtil.getFieldLinks(project, field));
                 requestForm.add(map);
@@ -504,24 +514,22 @@ public class BuildJsonForYapi {
     }
 
     /**
-     * @description: 获得响应参数
-     * @param: [project, psiType]
-     * @return: java.lang.String
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/2/19
+     * 获得响应参数
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/2/19
      */
     public static String getResponse(Project project, PsiType psiType, String returnClass) throws RuntimeException {
-        String response = null;
-        /** 最外层的包装类只会有一个泛型对应接口返回值 */
+        // 最外层的包装类只会有一个泛型对应接口返回值
         if (!Strings.isNullOrEmpty(returnClass) && !psiType.getCanonicalText().split("<")[0].equals(returnClass)) {
             PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(returnClass, GlobalSearchScope.allScope(project));
-            KV result = new KV();
+            KV<String, Object> result = new KV<>();
             List<String> requiredList = new ArrayList<>();
             if (Objects.nonNull(psiClass)) {
-                KV kvObject = getFields(psiClass, project, null, null, requiredList, new HashSet<>());
+                KV<String, Object> kvObject = getFields(psiClass, project, null, null, requiredList, new HashSet<>());
                 for (PsiField field : psiClass.getAllFields()) {
                     if (NormalTypes.genericList.contains(field.getType().getPresentableText())) {
-                        KV child = getPojoJson(project, psiType);
+                        KV<String, Object> child = getPojoJson(project, psiType);
                         kvObject.set(field.getName(), child);
                     }
                 }
@@ -533,26 +541,25 @@ public class BuildJsonForYapi {
             } else {
                 throw new RuntimeException("can not find class:" + returnClass);
             }
-            response = result.toPrettyJson();
+            return result.toPrettyJson();
         } else {
-            KV kv = getPojoJson(project, psiType);
-            response = Objects.isNull(kv) ? "" : kv.toPrettyJson();
+            KV<String, Object> kv = getPojoJson(project, psiType);
+            return Objects.isNull(kv) ? "" : kv.toPrettyJson();
         }
-        return response;
     }
 
-    public static KV getPojoJson(Project project, PsiType psiType) throws RuntimeException {
+    public static KV<String, Object> getPojoJson(Project project, PsiType psiType) throws RuntimeException {
         if (psiType instanceof PsiPrimitiveType) {
             //如果是基本类型
-            KV kvClass = KV.create();
+            KV<String, Object> kvClass = KV.create();
             kvClass.set(psiType.getCanonicalText(), NormalTypes.normalTypes.get(psiType.getPresentableText()));
         } else if (NormalTypes.isNormalType(psiType.getPresentableText())) {
             //如果是包装类型
-            KV kvClass = KV.create();
+            KV<String, Object> kvClass = KV.create();
             kvClass.set(psiType.getCanonicalText(), NormalTypes.normalTypes.get(psiType.getPresentableText()));
         } else if (psiType.getPresentableText().startsWith("List")) {
             String[] types = psiType.getCanonicalText().split("<");
-            KV listKv = new KV();
+            KV<String, Object> listKv = new KV<>();
             if (types.length > 1) {
                 String childPackage = types[1].split(">")[0];
                 if (NormalTypes.noramlTypesPackages.containsKey(childPackage)) {
@@ -564,7 +571,7 @@ public class BuildJsonForYapi {
                 } else {
                     PsiClass psiClassChild = JavaPsiFacade.getInstance(project).findClass(childPackage, GlobalSearchScope.allScope(project));
                     List<String> requiredList = new ArrayList<>();
-                    KV kvObject = getFields(psiClassChild, project, null, null, requiredList, new HashSet<>());
+                    KV<String, Object> kvObject = getFields(psiClassChild, project, null, null, requiredList, new HashSet<>());
                     listKv.set("type", "object");
                     addFilePaths(filePaths, psiClassChild);
                     if (Objects.nonNull(psiClassChild.getSuperClass()) && !psiClassChild.getSuperClass().getName().equals("Object")) {
@@ -574,7 +581,7 @@ public class BuildJsonForYapi {
                     listKv.set("required", requiredList);
                 }
             }
-            KV result = new KV();
+            KV<String, Object> result = new KV<>();
             result.set("type", "array");
             result.set("title", psiType.getPresentableText());
             result.set("description", psiType.getPresentableText());
@@ -582,7 +589,7 @@ public class BuildJsonForYapi {
             return result;
         } else if (psiType.getPresentableText().startsWith("Set")) {
             String[] types = psiType.getCanonicalText().split("<");
-            KV listKv = new KV();
+            KV<String, Object> listKv = new KV<>();
             if (types.length > 1) {
                 String childPackage = types[1].split(">")[0];
                 if (NormalTypes.noramlTypesPackages.containsKey(childPackage)) {
@@ -594,7 +601,7 @@ public class BuildJsonForYapi {
                 } else {
                     PsiClass psiClassChild = JavaPsiFacade.getInstance(project).findClass(childPackage, GlobalSearchScope.allScope(project));
                     List<String> requiredList = new ArrayList<>();
-                    KV kvObject = getFields(psiClassChild, project, null, null, requiredList, new HashSet<>());
+                    KV<String, Object> kvObject = getFields(psiClassChild, project, null, null, requiredList, new HashSet<>());
                     listKv.set("type", "object");
                     addFilePaths(filePaths, psiClassChild);
                     if (Objects.nonNull(psiClassChild.getSuperClass()) && !psiClassChild.getSuperClass().getName().equals("Object")) {
@@ -604,27 +611,27 @@ public class BuildJsonForYapi {
                     listKv.set("required", requiredList);
                 }
             }
-            KV result = new KV();
+            KV<String, Object> result = new KV<>();
             result.set("type", "array");
             result.set("title", psiType.getPresentableText());
             result.set("description", psiType.getPresentableText());
             result.set("items", listKv);
             return result;
         } else if (psiType.getPresentableText().startsWith("Map") || psiType.getPresentableText().startsWith("HashMap") || psiType.getPresentableText().startsWith("LinkedHashMap")) {
-            KV kv1 = new KV();
+            KV<String, Object> kv1 = new KV<>();
             kv1.set(KV.by("type", "object"));
             kv1.set(KV.by("description", "(该参数为map)"));
             if (((PsiClassReferenceType) psiType).getParameters().length > 1) {
-                KV keyObj = new KV();
+                KV<String, Object> keyObj = new KV<>();
                 keyObj.set("type", "object");
                 keyObj.set("description", ((PsiClassReferenceType) psiType).getParameters()[1].getPresentableText());
                 keyObj.set("properties", getFields(PsiUtil.resolveClassInType(((PsiClassReferenceType) psiType).getParameters()[1]), project, null, 0, new ArrayList<>(), new HashSet<>()));
 
-                KV key = new KV();
+                KV<String, Object> key = new KV<>();
                 key.set("type", "object");
                 key.set("description", ((PsiClassReferenceType) psiType).getParameters()[0].getPresentableText());
 
-                KV keyObjSup = new KV();
+                KV<String, Object> keyObjSup = new KV<>();
                 keyObjSup.set("mapKey", key);
                 keyObjSup.set("mapValue", keyObj);
                 kv1.set("properties", keyObjSup);
@@ -634,15 +641,15 @@ public class BuildJsonForYapi {
             return kv1;
         } else if (NormalTypes.collectTypes.containsKey(psiType.getPresentableText())) {
             //如果是集合类型
-            KV kvClass = KV.create();
+            KV<String, Object> kvClass = KV.create();
             kvClass.set(psiType.getCanonicalText(), NormalTypes.collectTypes.get(psiType.getPresentableText()));
         } else {
             String[] types = psiType.getCanonicalText().split("<");
             if (types.length > 1) {
                 PsiClass psiClassChild = JavaPsiFacade.getInstance(project).findClass(types[0], GlobalSearchScope.allScope(project));
-                KV result = new KV();
+                KV<String, Object> result = new KV<>();
                 List<String> requiredList = new ArrayList<>();
-                KV kvObject = getFields(psiClassChild, project, types, 1, requiredList, new HashSet<>());
+                KV<String, Object> kvObject = getFields(psiClassChild, project, types, 1, requiredList, new HashSet<>());
                 result.set("type", "object");
                 result.set("title", psiType.getPresentableText());
                 result.set("required", requiredList);
@@ -655,9 +662,9 @@ public class BuildJsonForYapi {
                 return result;
             } else {
                 PsiClass psiClassChild = JavaPsiFacade.getInstance(project).findClass(psiType.getCanonicalText(), GlobalSearchScope.allScope(project));
-                KV result = new KV();
+                KV<String, Object> result = new KV<>();
                 List<String> requiredList = new ArrayList<>();
-                KV kvObject = getFields(psiClassChild, project, null, null, requiredList, new HashSet<>());
+                KV<String, Object> kvObject = getFields(psiClassChild, project, null, null, requiredList, new HashSet<>());
                 addFilePaths(filePaths, psiClassChild);
                 if (Objects.nonNull(psiClassChild.getSuperClass()) && !psiClassChild.getSuperClass().getName().equals("Object")) {
                     addFilePaths(filePaths, psiClassChild.getSuperClass());
@@ -674,14 +681,13 @@ public class BuildJsonForYapi {
     }
 
     /**
-     * @description: 获得属性列表
-     * @param: [psiClass, project, childType, index]
-     * @return: com.qbb.build.KV
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/5/15
+     * 获得属性列表
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/5/15
      */
-    public static KV getFields(PsiClass psiClass, Project project, String[] childType, Integer index, List<String> requiredList, Set<String> pNames) {
-        KV kv = KV.create();
+    public static KV<String, Object> getFields(PsiClass psiClass, Project project, String[] childType, Integer index, List<String> requiredList, Set<String> pNames) {
+        KV<String, Object> kv = KV.create();
         if (psiClass != null) {
             if (Objects.nonNull(psiClass.getSuperClass()) && Objects.nonNull(NormalTypes.collectTypes.get(psiClass.getSuperClass().getName()))) {
                 for (PsiField field : psiClass.getFields()) {
@@ -694,8 +700,7 @@ public class BuildJsonForYapi {
                             || Objects.nonNull(PsiAnnotationSearchUtil.findAnnotation(field, JavaConstant.NotBlank))) {
                         requiredList.add(field.getName());
                     }
-                    Set<String> pNameList = new HashSet<>();
-                    pNameList.addAll(pNames);
+                    Set<String> pNameList = new HashSet<>(pNames);
                     pNameList.add(psiClass.getName());
                     getField(field, project, kv, childType, index, pNameList);
                 }
@@ -716,8 +721,7 @@ public class BuildJsonForYapi {
                                 || Objects.nonNull(PsiAnnotationSearchUtil.findAnnotation(field, JavaConstant.NotBlank))) {
                             requiredList.add(field.getName());
                         }
-                        Set<String> pNameList = new HashSet<>();
-                        pNameList.addAll(pNames);
+                        Set<String> pNameList = new HashSet<>(pNames);
                         pNameList.add(psiClass.getName());
                         getField(field, project, kv, childType, index, pNameList);
                     }
@@ -728,14 +732,14 @@ public class BuildJsonForYapi {
     }
 
     /**
-     * @description: 获得单个属性
-     * @param: [field, project, kv, childType, index, pName]
-     * @return: void
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/5/15
+     * 获得单个属性
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/5/15
      */
-    public static void getField(PsiField field, Project project, KV kv, String[] childType, Integer index, Set<String> pNames) {
-        if (field.getModifierList().hasModifierProperty("final")) {
+    public static void getField(PsiField field, Project project, KV<String, Object> kv, String[] childType, Integer index, Set<String> pNames) {
+        PsiModifierList modifierList = field.getModifierList();
+        if (modifierList == null || modifierList.hasModifierProperty(PsiModifier.FINAL)) {
             return;
         }
         PsiType type = field.getType();
@@ -797,7 +801,7 @@ public class BuildJsonForYapi {
                 if (childType != null) {
                     String child = childType[index].split(">")[0];
                     if ("?".equals(child)) {
-                        KV kv1 = new KV();
+                        KV<String, Object> kv1 = new KV<>();
                         kv.set(name, kv1);
                         kv1.set(KV.by("type", "?"));
                         kv1.set(KV.by("description", (Strings.isNullOrEmpty(remark) ? name : remark)));
@@ -807,7 +811,7 @@ public class BuildJsonForYapi {
                         PsiClass psiClassChild = JavaPsiFacade.getInstance(project).findClass(childType[index].split(">")[0], GlobalSearchScope.allScope(project));
                         getCollect(kv, psiClassChild.getName(), remark, psiClassChild, project, name, pNames, childType, index + 1);
                     } else if (NormalTypes.isNormalType(child) || NormalTypes.noramlTypesPackages.containsKey(child)) {
-                        KV kv1 = new KV();
+                        KV<String, Object> kv1 = new KV<>();
                         PsiClass psiClassChild = JavaPsiFacade.getInstance(project).findClass(child, GlobalSearchScope.allScope(project));
                         kv1.set(KV.by("type", Optional.ofNullable(NormalTypes.java2JsonTypes.get(psiClassChild.getName())).orElse(psiClassChild.getName())));
                         kv.set(name, kv1);
@@ -816,7 +820,7 @@ public class BuildJsonForYapi {
                                 , PsiAnnotationSearchUtil.getPsiParameterAnnotationParam(field, SwaggerConstants.API_MODEL_PROPERTY, "example"))));
                     } else {
                         //class type
-                        KV kv1 = new KV();
+                        KV<String, Object> kv1 = new KV<>();
                         kv1.set(KV.by("type", "object"));
                         PsiClass psiClassChild = JavaPsiFacade.getInstance(project).findClass(child, GlobalSearchScope.allScope(project));
                         kv1.set(KV.by("description", (Strings.isNullOrEmpty(remark) ? (psiClassChild.getName().trim()) : remark + " ," + psiClassChild.getName().trim())));
@@ -835,7 +839,7 @@ public class BuildJsonForYapi {
             } else if (type instanceof PsiArrayType) {
                 //array type
                 PsiType deepType = type.getDeepComponentType();
-                KV kvlist = new KV();
+                KV<String, Object> kvlist = new KV<>();
                 String deepTypeName = deepType.getPresentableText();
                 String cType = "";
                 if (deepType instanceof PsiPrimitiveType) {
@@ -862,7 +866,7 @@ public class BuildJsonForYapi {
                         kvlist.set(KV.by("type", PsiUtil.resolveClassInType(deepType).getName()));
                     }
                 }
-                KV kv1 = new KV();
+                KV<String, Object> kv1 = new KV<>();
                 kv1.set(KV.by("type", "array"));
                 kv1.set(KV.by("description", (remark + " :" + cType).trim()));
                 kv1.set("items", kvlist);
@@ -877,20 +881,20 @@ public class BuildJsonForYapi {
                 }
             } else if (fieldTypeName.startsWith("HashMap") || fieldTypeName.startsWith("Map") || fieldTypeName.startsWith("LinkedHashMap")) {
                 //HashMap or Map
-                KV kv1 = new KV();
+                KV<String, Object> kv1 = new KV<>();
                 kv1.set(KV.by("type", "object"));
                 kv1.set(KV.by("description", remark + "(该参数为map)"));
                 if (((PsiClassReferenceType) type).getParameters().length > 1) {
-                    KV keyObj = new KV();
+                    KV<String, Object> keyObj = new KV<>();
                     keyObj.set("type", "object");
                     keyObj.set("description", ((PsiClassReferenceType) type).getParameters()[1].getPresentableText());
                     keyObj.set("properties", getFields(PsiUtil.resolveClassInType(((PsiClassReferenceType) type).getParameters()[1]), project, childType, index, new ArrayList<>(), pNames));
 
-                    KV key = new KV();
+                    KV<String, Object> key = new KV<>();
                     key.set("type", "object");
                     key.set("description", ((PsiClassReferenceType) type).getParameters()[0].getPresentableText());
 
-                    KV keyObjSup = new KV();
+                    KV<String, Object> keyObjSup = new KV<>();
                     keyObjSup.set("mapKey", key);
                     keyObjSup.set("mapValue", keyObj);
                     kv1.set("properties", keyObjSup);
@@ -900,7 +904,7 @@ public class BuildJsonForYapi {
                 kv.set(name, kv1);
             } else {
                 //class type
-                KV kv1 = new KV();
+                KV<String, Object> kv1 = new KV<>();
                 PsiClass psiClass = PsiUtil.resolveClassInType(type);
                 kv1.set(KV.by("type", "object"));
                 kv1.set(KV.by("description", (Strings.isNullOrEmpty(remark) ? (psiClass.getName().trim()) : (remark + " ," + psiClass.getName()).trim())));
@@ -918,14 +922,13 @@ public class BuildJsonForYapi {
     }
 
     /**
-     * @description: 获得集合
-     * @param: [kv, classTypeName, remark, psiClass, project, name, pName]
-     * @return: void
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/5/15
+     * 获得集合
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/5/15
      */
-    public static void getCollect(KV kv, String classTypeName, String remark, PsiClass psiClass, Project project, String name, Set<String> pNames, String[] childType, Integer index) {
-        KV kvlist = new KV();
+    public static void getCollect(KV<String, Object> kv, String classTypeName, String remark, PsiClass psiClass, Project project, String name, Set<String> pNames, String[] childType, Integer index) {
+        KV<String, Object> kvlist = new KV<>();
         if (NormalTypes.isNormalType(classTypeName) || NormalTypes.collectTypes.containsKey(classTypeName)) {
             kvlist.set("type", Optional.ofNullable(NormalTypes.java2JsonTypes.get(classTypeName)).orElse(classTypeName));
             if (!Strings.isNullOrEmpty(remark)) {
@@ -943,7 +946,7 @@ public class BuildJsonForYapi {
                 kvlist.set(KV.by("type", psiClass.getName()));
             }
         }
-        KV kv1 = new KV();
+        KV<String, Object> kv1 = new KV<>();
         kv1.set(KV.by("type", "array"));
         kv1.set(KV.by("description", (Strings.isNullOrEmpty(remark) ? (psiClass.getName().trim()) : remark + " ," + psiClass.getName().trim())));
         kv1.set("items", kvlist);
@@ -951,11 +954,10 @@ public class BuildJsonForYapi {
     }
 
     /**
-     * @description: 添加到文件路径列表
-     * @param: [filePaths, psiClass]
-     * @return: void
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/5/6
+     * 添加到文件路径列表
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/5/6
      */
     public static boolean addFilePaths(Set<String> filePaths, PsiClass psiClass) {
         try {
@@ -973,18 +975,17 @@ public class BuildJsonForYapi {
                 } else {
                     return false;
                 }
-            } catch (Exception e1) {
+            } catch (Exception ignored) {
             }
         }
         return false;
     }
 
     /**
-     * @description: 转换文件路径
-     * @param: [project]
-     * @return: void
-     * @author: chengsheng@qbb6.com
-     * @date: 2019/5/6
+     * 转换文件路径
+     *
+     * @author chengsheng@qbb6.com
+     * @since 2019/5/6
      */
     public static void changeFilePath(Project project) {
         Set<String> changeFilePaths = filePaths.stream().map(filePath -> {
@@ -1019,7 +1020,6 @@ public class BuildJsonForYapi {
                         if (field.getType() instanceof PsiArrayType) {
                             //array type
                             PsiType deepType = field.getType().getDeepComponentType();
-                            KV kvlist = new KV();
                             String deepTypeName = deepType.getPresentableText();
                             if (!(deepType instanceof PsiPrimitiveType) && !NormalTypes.isNormalType(deepTypeName)) {
                                 psiClass = PsiUtil.resolveClassInType(deepType);
@@ -1082,7 +1082,7 @@ public class BuildJsonForYapi {
             PsiMethod[] psiMethods = selectedClass.getMethods();
             for (PsiMethod psiMethodTarget : psiMethods) {
                 //去除私有方法
-                if (!psiMethodTarget.getModifierList().hasModifierProperty("private") && Objects.nonNull(psiMethodTarget.getReturnType())) {
+                if (!psiMethodTarget.getModifierList().hasModifierProperty(PsiModifier.PRIVATE) && Objects.nonNull(psiMethodTarget.getReturnType())) {
                     YapiApiDTO yapiApiDTO = actionPerformed(selectedClass, psiMethodTarget, project, psiFile, attachUpload, returnClass);
                     if (Objects.nonNull(yapiApiDTO)) {
                         if (Objects.isNull(yapiApiDTO.getMenu())) {
@@ -1118,6 +1118,5 @@ public class BuildJsonForYapi {
         }
         return yapiApiDTOS;
     }
-
 
 }
