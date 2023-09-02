@@ -142,12 +142,8 @@ public class BuildJsonForYapi {
             }
             PsiDocComment docComment = targetMethod.getDocComment();
             if (Objects.nonNull(docComment)) {
-                // 支持菜单
+                // 使用 class 注释上的菜单而不是 method 的
                 String text = docComment.getText();
-                String menu = DesUtil.getMenu(text);
-                if (!Strings.isNullOrEmpty(menu)) {
-                    yapiApiDTO.setMenu(menu);
-                }
                 // 支持状态
                 String status = DesUtil.getStatus(text);
                 if (!Strings.isNullOrEmpty(status)) {
@@ -1170,19 +1166,22 @@ public class BuildJsonForYapi {
 
     @NotNull
     private static String getClassMenu(PsiClass selectedClass) {
-        String classMenu = null;
+        String className = selectedClass.getName();
         PsiElement context = selectedClass.getContext();
         String text = selectedClass.getText();
-        if (Objects.nonNull(context)) {
-            classMenu = DesUtil.getMenu(context.getText().replace(text, ""));
+        if (context != null) {
+            String classMenu = DesUtil.getMenu(context.getText().replace(text, ""));
+            if (StringUtils.isNotBlank(classMenu)) {
+                return classMenu + "-" + className;
+            }
         }
         if (Objects.nonNull(selectedClass.getDocComment())) {
-            classMenu = DesUtil.getMenu(text);
+            String classMenu = DesUtil.getMenu(text);
+            if (StringUtils.isNotBlank(classMenu)) {
+                return classMenu + "-" + className;
+            }
         }
-        if (StringUtils.isEmpty(classMenu)) {
-            classMenu = DesUtil.camelToLine(selectedClass.getName(), null);
-        }
-        return classMenu;
+        return DesUtil.camelToLine(className, null);
     }
 
 }

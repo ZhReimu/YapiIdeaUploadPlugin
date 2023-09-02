@@ -184,11 +184,20 @@ public class DesUtil {
                             .replace("*", "")
                             .replace(":", "")
                             .replace("\n", " ")
-                            .replace(" ", "")
-                    , ' '
+                            .replace(" ", ""),
+                    ' '
             ).trim();
         } else {
-            return null;
+            return trimFirstAndLastChar(
+                    text.split("@")[0]
+                            .replace("@description", "")
+                            .replace("@Description", "")
+                            .replace(":", "")
+                            .replace("*", "")
+                            .replace("/", "")
+                            .replace("\n", " "),
+                    ' '
+            );
         }
     }
 
