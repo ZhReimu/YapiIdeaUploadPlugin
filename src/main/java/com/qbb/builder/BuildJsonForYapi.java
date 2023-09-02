@@ -668,109 +668,74 @@ public class BuildJsonForYapi {
             // 如果是包装类型
             KV<String, Object> kvClass = KV.create();
             kvClass.set(psiType.getCanonicalText(), NormalTypes.getNormalType(typeName));
-        } else if (typeName.startsWith("List")) {
-            return getFieldPayloadForList(project, psiType, typeName);
-        } else if (typeName.startsWith("Set")) {
-            return getKvForSet(project, psiType, typeName);
+        } else if (typeName.startsWith("List") || typeName.startsWith("Set")) {
+            return getFieldPayloadForList(project, psiType, typeName).toKV();
         } else if (typeName.startsWith("Map") || typeName.startsWith("HashMap") || typeName.startsWith("LinkedHashMap")) {
-            return getKvForMap(project, (PsiClassReferenceType) psiType);
+            return getFieldPayloadForMap(project, (PsiClassReferenceType) psiType).toKV();
         } else if (NormalTypes.isCollectionType(typeName)) {
             //如果是集合类型
             KV<String, Object> kvClass = KV.create();
             kvClass.set(psiType.getCanonicalText(), NormalTypes.getCollectionType(typeName));
         } else {
-            return getKvForOther(project, psiType, typeName);
+            return getKvForOther(project, psiType, typeName).toKV();
         }
         return null;
     }
 
     @NotNull
-    private static KV<String, Object> getKvForOther(Project project, PsiType psiType, String typeName) {
+    private static FieldPayload getKvForOther(Project project, PsiType psiType, String typeName) {
         String[] types = psiType.getCanonicalText().split("<");
         // 判断是否有泛型参数
         if (types.length > 1) {
             List<String> requiredList = new ArrayList<>();
-            KV<String, Object> result = KV.create();
+            FieldPayload fieldPayload = FieldPayload.newObjectField();
             PsiClass psiClassChild = JavaPsiFacade.getInstance(project).findClass(types[0], GlobalSearchScope.allScope(project));
-            KV<String, Object> kvObject = getFields(psiClassChild, project, types, 1, requiredList, new HashSet<>());
-            result.set("type", "object");
-            result.set("title", typeName);
-            result.set("required", requiredList);
+            Map<String, Object> kvObject = getFields(psiClassChild, project, types, 1, requiredList, new HashSet<>());
+            fieldPayload.setTitle(typeName);
+            fieldPayload.setRequired(requiredList);
             processSourceFiles(psiClassChild);
-            result.set("description", (typeName + " :" + psiClassChild.getName()).trim());
-            result.set("properties", kvObject);
-            return result;
+            fieldPayload.setDescription((typeName + " :" + psiClassChild.getName()).trim());
+            fieldPayload.setProperties(kvObject);
+            return fieldPayload;
         }
-        KV<String, Object> result = KV.create();
+        FieldPayload fieldPayload = FieldPayload.newObjectField();
         List<String> requiredList = new ArrayList<>();
         PsiClass psiClassChild = JavaPsiFacade.getInstance(project).findClass(psiType.getCanonicalText(), GlobalSearchScope.allScope(project));
-        KV<String, Object> kvObject = getFields(psiClassChild, project, null, null, requiredList, new HashSet<>());
+        Map<String, Object> kvObject = getFields(psiClassChild, project, null, null, requiredList, new HashSet<>());
         processSourceFiles(psiClassChild);
-        result.set("type", "object");
-        result.set("required", requiredList);
-        result.set("title", typeName);
-        result.set("description", (typeName + " :" + psiClassChild.getName()).trim());
-        result.set("properties", kvObject);
-        return result;
+        fieldPayload.setRequired(requiredList);
+        fieldPayload.setTitle(typeName);
+        fieldPayload.setDescription((typeName + " :" + psiClassChild.getName()).trim());
+        fieldPayload.setProperties(kvObject);
+        return fieldPayload;
     }
 
     @NotNull
-    private static KV<String, Object> getKvForMap(Project project, PsiClassReferenceType psiType) {
-        KV<String, Object> kv1 = new KV<>();
-        kv1.set(KV.by("type", "object"));
-        kv1.set(KV.by("description", "(该参数为map)"));
+    private static FieldPayload getFieldPayloadForMap(Project project, PsiClassReferenceType psiType) {
+        FieldPayload fieldPayload = FieldPayload.newObjectField();
+        fieldPayload.setDescription("(该参数为map)");
         if (psiType.getParameters().length > 1) {
-            KV<String, Object> keyObj = new KV<>();
-            keyObj.set("type", "object");
-            keyObj.set("description", psiType.getParameters()[1].getPresentableText());
-            keyObj.set("properties", getFields(PsiUtil.resolveClassInType(psiType.getParameters()[1]), project, null, 0, new ArrayList<>(), new HashSet<>()));
+            FieldPayload key = FieldPayload.newObjectField();
+            key.setDescription(psiType.getParameters()[0].getPresentableText());
 
-            KV<String, Object> key = new KV<>();
-            key.set("type", "object");
-            key.set("description", psiType.getParameters()[0].getPresentableText());
+            FieldPayload value = FieldPayload.newObjectField();
+            value.setDescription(psiType.getParameters()[1].getPresentableText());
+            PsiClass psiClass = PsiUtil.resolveClassInType(psiType.getParameters()[1]);
+            Map<String, Object> fields = getFields(psiClass, project, null, 0, new ArrayList<>(), new HashSet<>());
+            value.setProperties(fields);
 
-            KV<String, Object> keyObjSup = new KV<>();
-            keyObjSup.set("mapKey", key);
-            keyObjSup.set("mapValue", keyObj);
-            kv1.set("properties", keyObjSup);
+            Map<String, Object> keyObjSup = new HashMap<>();
+            keyObjSup.put("mapKey", key);
+            keyObjSup.put("mapValue", value);
+            fieldPayload.setProperties(keyObjSup);
         } else {
-            kv1.set(KV.by("description", "请完善Map<?,?>"));
+            fieldPayload.setDescription("请完善Map<?,?>");
         }
-        return kv1;
+        return fieldPayload;
     }
 
     @NotNull
-    private static KV<String, Object> getKvForSet(Project project, PsiType psiType, String typeName) {
-        String[] types = psiType.getCanonicalText().split("<");
-        KV<String, Object> listKv = new KV<>();
-        if (types.length > 1) {
-            String childPackage = types[1].split(">")[0];
-            if (NormalTypes.isNormalType(childPackage)) {
-                String[] childTypes = childPackage.split("\\.");
-                listKv.set("type", NormalTypes.java2JsonType(childTypes[childTypes.length - 1]));
-            } else if (NormalTypes.isCollectionType(childPackage)) {
-                String[] childTypes = childPackage.split("\\.");
-                listKv.set("type", childTypes[childTypes.length - 1]);
-            } else {
-                PsiClass psiClassChild = JavaPsiFacade.getInstance(project).findClass(childPackage, GlobalSearchScope.allScope(project));
-                List<String> requiredList = new ArrayList<>();
-                KV<String, Object> kvObject = getFields(psiClassChild, project, null, null, requiredList, new HashSet<>());
-                listKv.set("type", "object");
-                processSourceFiles(psiClassChild);
-                listKv.set("properties", kvObject);
-                listKv.set("required", requiredList);
-            }
-        }
-        KV<String, Object> result = new KV<>();
-        result.set("type", "array");
-        result.set("title", typeName);
-        result.set("description", typeName);
-        result.set("items", listKv);
-        return result;
-    }
-
-    @NotNull
-    private static KV<String, Object> getFieldPayloadForList(Project project, PsiType psiType, String typeName) {
+    private static ResponsePayload getFieldPayloadForList(Project project, PsiType psiType, String typeName) {
         String[] types = psiType.getCanonicalText().split("<");
         FieldPayload fieldPayload = new FieldPayload();
         if (types.length > 1) {
@@ -796,7 +761,7 @@ public class BuildJsonForYapi {
         payload.setTitle(typeName);
         payload.setDescription(typeName);
         payload.setItems(fieldPayload);
-        return payload.toKV();
+        return payload;
     }
 
     private static void processSourceFiles(PsiClass psiClassChild) {
