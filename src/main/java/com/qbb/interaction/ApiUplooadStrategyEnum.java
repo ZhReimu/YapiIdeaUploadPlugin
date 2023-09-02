@@ -7,6 +7,7 @@ import com.qbb.builder.BuildJsonForYapi;
 import com.qbb.constant.ProjectTypeConstant;
 import com.qbb.dto.*;
 import com.qbb.upload.UploadYapi;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -54,6 +55,7 @@ public enum ApiUplooadStrategyEnum {
         return url;
     }
 
+    @NotNull
     public static ApiUplooadStrategyEnum ofType(String type) {
         return handlers.stream().filter(it -> it.type.equals(type)).findFirst().orElseThrow(IllegalArgumentException::new);
     }
@@ -68,7 +70,7 @@ public enum ApiUplooadStrategyEnum {
         List<String> docUrls = yapiDubboDTOs.stream()
                 .map(it -> upload(YapiSaveParam.ofDubbo(it, projectToken, projectId, yapiUrl), config))
                 .collect(Collectors.toList());
-        return docUrls.get(0);
+        return docUrls.isEmpty() ? null : docUrls.get(0);
     }
 
     @Nullable
@@ -81,7 +83,7 @@ public enum ApiUplooadStrategyEnum {
         List<String> docUrls = yapiApiDTOS.stream()
                 .map(it -> upload(YapiSaveParam.ofApi(it, projectToken, projectId, yapiUrl), config))
                 .collect(Collectors.toList());
-        return docUrls.get(0);
+        return docUrls.isEmpty() ? null : docUrls.get(0);
     }
 
     private static String upload(YapiSaveParam yapiSaveParam, ConfigDTO config) {
