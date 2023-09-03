@@ -10,7 +10,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>YapiUploaderCore</module>
-        <module>ASMYapiUploader</module>
+        <module>ASTYapiUploader</module>
     </modules>
 
     <properties>
@@ -37,14 +37,20 @@
                 <version>2.0.22</version>
             </dependency>
             <dependency>
-                <groupId>org.ow2.asm</groupId>
-                <artifactId>asm</artifactId>
-                <version>9.5</version>
+                <groupId>com.github.javaparser</groupId>
+                <artifactId>javaparser-core</artifactId>
+                <version>3.25.5</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.javaparser</groupId>
+                <artifactId>javaparser-symbol-solver-core</artifactId>
+                <version>3.25.5</version>
             </dependency>
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
                 <version>1.18.28</version>
+                <scope>provided</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
